@@ -1,6 +1,6 @@
-# MVariable Codelab
+# MVariable Tutorial
 
-Note: A full working version of the code for this codelab can be found in
+Note: A full working version of the code for this tutorial can be found in
 `examples/mexample_graph.cc`.
 
 ## Summary
@@ -70,7 +70,7 @@ There are a few reasons for this:
 
 ## Create your first `MVariable`
 
-In this codelab, we will create a Moriarty component for a
+In this tutorial, we will create a Moriarty component for a
 [graph](https://en.wikipedia.org/wiki/Graph_\(discrete_mathematics\)). (You
 don't need to know anything about graphs other than (1) they are dots and lines
 and (2) "connected" means you can walk from every dot to every other dot using 1
@@ -92,7 +92,7 @@ MExampleGraph G = MExampleGraph()
 ## Step 0: Create an `ExampleGraph` class.
 
 In normal scenarios, this class should already exist and you are just attempting
-to describe it. For this codelab, here is the `ExampleGraph` class we will use
+to describe it. For this tutorial, here is the `ExampleGraph` class we will use
 (Note that this class does not conform to Google's C++ Style Guide, it is just
 used here for simplicity).
 
@@ -534,7 +534,7 @@ Both `WithNumNodes` and `WithNumEdges` should probably have an overload which
 takes just an `int` (so the user can write `WithNumNodes(10)`) as well as
 optionally a two parameter version and versions that take strings so that your
 variable can interact with other variables (e.g., `WithNumNodes("3 * N + 1")`
-and `WithNumEdges(1, "N")`.) These are outside the scope of this codelab, but
+and `WithNumEdges(1, "N")`.) These are outside the scope of this tutorial, but
 these functions are simple to write: they should create an `MInteger` with the
 appropriate parameters and pass it to the `WithNumNodes`/`WithNumEdges` we made
 above.

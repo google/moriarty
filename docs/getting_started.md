@@ -1,6 +1,6 @@
 # Getting Started
 
-This codelab will take you through the process of generating some data and
+This tutorial will take you through the process of generating some data and
 printing it to the screen.
 
 In general, there are three steps to any Moriarty program:
