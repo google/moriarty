@@ -39,13 +39,46 @@
 #include "src/librarian/size_property.h"
 #include "src/property.h"
 #include "src/util/status_macro/status_macros.h"
+#include "src/variables/constraints/base_constraints.h"
+#include "src/variables/constraints/numeric_constraints.h"
+#include "src/variables/constraints/size_constraints.h"
 
 namespace moriarty {
 
 using ::moriarty::librarian::IOConfig;
 
-MInteger::MInteger() {
-  RegisterKnownProperty("size", &MInteger::OfSizeProperty);
+MInteger& MInteger::AddConstraint(const Exactly<int64_t>& constraint) {
+  bounds_.Intersect(Range(constraint.GetValue(), constraint.GetValue()));
+  return *this;
+}
+
+MInteger& MInteger::AddConstraint(const Exactly<std::string>& constraint) {
+  Range r;
+  r.AtLeast(constraint.GetValue()).IgnoreError();
+  r.AtMost(constraint.GetValue()).IgnoreError();
+  bounds_.Intersect(r);
+  return *this;
+}
+
+MInteger& MInteger::AddConstraint(const class Between& constraint) {
+  bounds_.Intersect(constraint.GetRange());
+  return *this;
+}
+
+MInteger& MInteger::AddConstraint(const class AtMost& constraint) {
+  bounds_.Intersect(constraint.GetRange());
+  return *this;
+}
+
+MInteger& MInteger::AddConstraint(const class AtLeast& constraint) {
+  bounds_.Intersect(constraint.GetRange());
+  return *this;
+}
+
+MInteger& MInteger::AddConstraint(const SizeCategory& constraint) {
+  // TODO(darcybest): This should be MergedSize.
+  approx_size_ = constraint.GetCommonSize();
+  return *this;
 }
 
 MInteger& MInteger::Is(absl::string_view integer_expression) {

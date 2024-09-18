@@ -17,9 +17,11 @@
 #ifndef MORIARTY_SRC_VARIABLES_MINTEGER_H_
 #define MORIARTY_SRC_VARIABLES_MINTEGER_H_
 
+#include <concepts>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -29,16 +31,36 @@
 #include "src/librarian/mvariable.h"
 #include "src/librarian/size_property.h"
 #include "src/property.h"
+#include "src/variables/constraints/base_constraints.h"
+#include "src/variables/constraints/numeric_constraints.h"
+#include "src/variables/constraints/size_constraints.h"
 
 namespace moriarty {
 
 // MInteger
 //
-// moriarty::MInteger is an integral variable type. It works as a 64-bit signed
-// integer internally and all APIs are designed around int64_t.
+// moriarty::MInteger is an integral variable type. It works as a 64-bit
+// signed integer internally and all APIs are designed around int64_t.
 class MInteger : public librarian::MVariable<MInteger, int64_t> {
  public:
-  MInteger();
+  // Create an MInteger from a set of constraints. Logically equivalent to
+  // calling AddConstraint() for each constraint.
+  template <typename... Constraints>
+    requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+  explicit MInteger(Constraints&&... constraints);
+
+  // The integer must be exactly this value.
+  MInteger& AddConstraint(const Exactly<int64_t>& constraint);
+  // The integer must be exactly this integer expression (e.g., "3 * N + 1").
+  MInteger& AddConstraint(const Exactly<std::string>& constraint);
+  // The integer must be in this inclusive range.
+  MInteger& AddConstraint(const Between& constraint);
+  // The integer must be this value or smaller.
+  MInteger& AddConstraint(const AtMost& constraint);
+  // The integer must be this value or larger.
+  MInteger& AddConstraint(const AtLeast& constraint);
+  // The integer should be approximately this size.
+  MInteger& AddConstraint(const SizeCategory& constraint);
 
   [[nodiscard]] std::string Typename() const override { return "MInteger"; }
 
@@ -54,10 +76,10 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
 
   // Between()
   //
-  // Restrict this integer to be in the inclusive range [`minimum`, `maximum`].
-  // If this restriction is called multiple times, the ranges are intersected
-  // together. For example `x.Between(1, 10).Between(5, 12);` is equivalent to
-  // `x.Between(5, 10);`.
+  // Restrict this integer to be in the inclusive range [`minimum`,
+  // `maximum`]. If this restriction is called multiple times, the ranges are
+  // intersected together. For example `x.Between(1, 10).Between(5, 12);` is
+  // equivalent to `x.Between(5, 10);`.
   MInteger& Between(int64_t minimum, int64_t maximum);
 
   // Between()
@@ -65,9 +87,9 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   // Restrict this integer to be in the inclusive range
   // [`minimum_integer_expression`, `maximum_integer_expression`].
   //
-  // This integer expression may contain variable names, which should be in the
-  // same global context as this variable (e.g., same Moriarty instance, same
-  // Generator, etc)
+  // This integer expression may contain variable names, which should be in
+  // the same global context as this variable (e.g., same Moriarty instance,
+  // same Generator, etc)
   //
   // If any `.Between()` restriction is called multiple times, the ranges are
   // intersected together. For example `x.Between(1, 10).Between(5, "3 * N");`
@@ -103,9 +125,9 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   // Restricts this integer to be larger than or equal to
   // `minimum_integer_expression`.
   //
-  // This integer expression may contain variable names, which should be in the
-  // same global context as this variable (e.g., same Moriarty instance, same
-  // Generator, etc)
+  // This integer expression may contain variable names, which should be in
+  // the same global context as this variable (e.g., same Moriarty instance,
+  // same Generator, etc)
   MInteger& AtLeast(absl::string_view minimum_integer_expression);
 
   // AtMost()
@@ -118,18 +140,18 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   // Restricts this integer to be larger than or equal to
   // `maximum_integer_expression`.
   //
-  // This integer expression may contain variable names, which should be in the
-  // same global context as this variable (e.g., same Moriarty instance, same
-  // Generator, etc)
+  // This integer expression may contain variable names, which should be in
+  // the same global context as this variable (e.g., same Moriarty instance,
+  // same Generator, etc)
   MInteger& AtMost(absl::string_view maximum_integer_expression);
 
   // WithSize()
   //
   // Sets the approximate size of this integer.
   // The exact meaning of each of these is an implementation detail, but they
-  // are approximately in the order specified here (for example, in general, you
-  // should expect "tiny" to be smaller than "small", and "small" to be smaller
-  // than "medium", etc.)
+  // are approximately in the order specified here (for example, in general,
+  // you should expect "tiny" to be smaller than "small", and "small" to be
+  // smaller than "medium", etc.)
   //
   // TODO(darcybest): This currently overwrites the old value. It should
   // probably merge the value as other functions do.
@@ -137,9 +159,9 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
 
   // OfSizeProperty()
   //
-  // Tells this int to have a specific size. `property.category` must be "size".
-  // The exact values here are not guaranteed and may change over time. If exact
-  // values are required, specify them manually.
+  // Tells this int to have a specific size. `property.category` must be
+  // "size". The exact values here are not guaranteed and may change over
+  // time. If exact values are required, specify them manually.
   //
   // TODO(darcybest): This currently overwrites the old value. It should
   // probably merge the value as other functions do.
@@ -152,8 +174,8 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   CommonSize approx_size_ = CommonSize::kAny;
 
   // Computes and returns the minimum and maximum of `bounds_`. Returns
-  // `kInvalidArgumentError` if the range is empty. The `non-const` version may
-  // generate other dependent variables if needed along the way.
+  // `kInvalidArgumentError` if the range is empty. The `non-const` version
+  // may generate other dependent variables if needed along the way.
   absl::StatusOr<Range::ExtremeValues> GetExtremeValues() const;
   absl::StatusOr<Range::ExtremeValues> GetExtremeValues();
 
@@ -176,6 +198,17 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
       const int64_t& value) const override;
   // ---------------------------------------------------------------------------
 };
+
+// -----------------------------------------------------------------------------
+//  Implementation details
+// -----------------------------------------------------------------------------
+
+template <typename... Constraints>
+  requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+MInteger::MInteger(Constraints&&... constraints) {
+  RegisterKnownProperty("size", &MInteger::OfSizeProperty);
+  (AddConstraint(std::forward<Constraints>(constraints)), ...);
+}
 
 }  // namespace moriarty
 

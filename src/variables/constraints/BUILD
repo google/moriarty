@@ -31,6 +31,28 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "numeric_constraints",
+    srcs = ["numeric_constraints.cc"],
+    hdrs = ["numeric_constraints.h"],
+    deps = [
+        ":base_constraints",
+        "@absl//absl/strings:string_view",
+        "//src/internal:range",
+    ],
+)
+
+cc_library(
+    name = "size_constraints",
+    srcs = ["size_constraints.cc"],
+    hdrs = ["size_constraints.h"],
+    deps = [
+        ":base_constraints",
+        "@absl//absl/strings:string_view",
+        "//src/librarian:size_property",
+    ],
+)
+
 cc_test(
     name = "base_constraints_test",
     srcs = ["base_constraints_test.cc"],
@@ -38,5 +60,25 @@ cc_test(
         ":base_constraints",
         "@com_google_googletest//:gtest_main",
         "@absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "numeric_constraints_test",
+    srcs = ["numeric_constraints_test.cc"],
+    deps = [
+        ":numeric_constraints",
+        "@com_google_googletest//:gtest_main",
+        "//src/internal:range",
+    ],
+)
+
+cc_test(
+    name = "size_constraints_test",
+    srcs = ["size_constraints_test.cc"],
+    deps = [
+        ":size_constraints",
+        "@com_google_googletest//:gtest_main",
+        "//src/librarian:size_property",
     ],
 )

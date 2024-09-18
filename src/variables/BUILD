@@ -53,7 +53,6 @@ cc_library(
         "@absl//absl/algorithm:container",
         "@absl//absl/container:flat_hash_map",
         "@absl//absl/container:flat_hash_set",
-        "@absl//absl/meta:type_traits",
         "@absl//absl/status",
         "@absl//absl/status:statusor",
         "@absl//absl/strings",
@@ -66,6 +65,9 @@ cc_library(
         "//src/librarian:mvariable",
         "//src/librarian:size_property",
         "//src/util/status_macro:status_macros",
+        "//src/variables/constraints:base_constraints",
+        "//src/variables/constraints:numeric_constraints",
+        "//src/variables/constraints:size_constraints",
     ],
 )
 
@@ -142,6 +144,9 @@ cc_test(
         "//src/librarian:size_property",
         "//src/librarian:test_utils",
         "//src/util/test_status_macro:status_testutil",
+        "//src/variables/constraints:base_constraints",
+        "//src/variables/constraints:numeric_constraints",
+        "//src/variables/constraints:size_constraints",
     ],
 )
 
