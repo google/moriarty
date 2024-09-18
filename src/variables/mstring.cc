@@ -36,12 +36,39 @@
 #include "src/librarian/mvariable.h"
 #include "src/property.h"
 #include "src/util/status_macro/status_macros.h"
+#include "src/variables/constraints/base_constraints.h"
+#include "src/variables/constraints/container_constraints.h"
+#include "src/variables/constraints/size_constraints.h"
+#include "src/variables/constraints/string_constraints.h"
 #include "src/variables/minteger.h"
 
 namespace moriarty {
+
 using moriarty::librarian::IOConfig;
 
-MString::MString() { RegisterKnownProperty("size", &MString::OfSizeProperty); }
+MString& MString::AddConstraint(const Exactly<std::string>& constraint) {
+  return Is(constraint.GetValue());
+}
+
+MString& MString::AddConstraint(const Length& constraint) {
+  return OfLength(constraint.GetConstraints());
+}
+
+MString& MString::AddConstraint(const Alphabet& constraint) {
+  return WithAlphabet(constraint.GetAlphabet());
+}
+
+MString& MString::AddConstraint(const DistinctCharacters& constraint) {
+  return WithDistinctCharacters();
+}
+
+MString& MString::AddConstraint(const SimplePattern& constraint) {
+  return WithSimplePattern(constraint.GetPattern());
+}
+
+MString& MString::AddConstraint(const SizeCategory& constraint) {
+  return AddConstraint(Length(constraint));
+}
 
 MString& MString::OfLength(const MInteger& length) {
   if (length_)

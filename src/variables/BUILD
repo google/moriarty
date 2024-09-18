@@ -38,6 +38,10 @@ cc_library(
         "//src/librarian:io_config",
         "//src/librarian:mvariable",
         "//src/util/status_macro:status_macros",
+        "//src/variables/constraints:base_constraints",
+        "//src/variables/constraints:container_constraints",
+        "//src/variables/constraints:io_constraints",
+        "//src/variables/constraints:size_constraints",
     ],
 )
 
@@ -94,6 +98,10 @@ cc_library(
         "//src/librarian:io_config",
         "//src/librarian:mvariable",
         "//src/util/status_macro:status_macros",
+        "//src/variables/constraints:base_constraints",
+        "//src/variables/constraints:container_constraints",
+        "//src/variables/constraints:size_constraints",
+        "//src/variables/constraints:string_constraints",
     ],
 )
 
@@ -128,6 +136,10 @@ cc_test(
         "//src/librarian:mvariable",
         "//src/librarian:test_utils",
         "//src/util/test_status_macro:status_testutil",
+        "//src/variables/constraints:base_constraints",
+        "//src/variables/constraints:container_constraints",
+        "//src/variables/constraints:io_constraints",
+        "//src/variables/constraints:numeric_constraints",
     ],
 )
 
@@ -167,6 +179,9 @@ cc_test(
         "//src/librarian:mvariable",
         "//src/librarian:test_utils",
         "//src/util/test_status_macro:status_testutil",
+        "//src/variables/constraints:container_constraints",
+        "//src/variables/constraints:numeric_constraints",
+        "//src/variables/constraints:string_constraints",
     ],
 )
 

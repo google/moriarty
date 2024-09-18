@@ -23,6 +23,7 @@
 #include <iterator>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -39,6 +40,10 @@
 #include "src/librarian/mvariable.h"
 #include "src/property.h"
 #include "src/util/status_macro/status_macros.h"
+#include "src/variables/constraints/base_constraints.h"
+#include "src/variables/constraints/container_constraints.h"
+#include "src/variables/constraints/io_constraints.h"
+#include "src/variables/constraints/size_constraints.h"
 #include "src/variables/minteger.h"
 
 namespace moriarty {
@@ -56,8 +61,28 @@ class MArray : public librarian::MVariable<
   using element_value_type = typename MElementType::value_type;
   using vector_value_type = typename std::vector<element_value_type>;
 
-  MArray();
-  explicit MArray(MElementType variable);
+  // Create an MArray from a set of constraints. Logically equivalent to
+  // calling AddConstraint() for each constraint. E.g.,
+  // MArray<MInteger>(Elements<MInteger>(Between(1, 10)), Length(15))
+  template <typename... Constraints>
+    requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+  explicit MArray(Constraints&&... constraints);
+
+  // Create an MArray with this set of constraints on each element.
+  explicit MArray(MElementType element_constraints);
+
+  // The array must have exactly this value.
+  MArray& AddConstraint(const Exactly<vector_value_type>& constraint);
+  // The array's elements must satisfy these constraints.
+  MArray& AddConstraint(const Elements<MElementType>& constraint);
+  // The array must have this length.
+  MArray& AddConstraint(const Length& constraint);
+  // The array's elements must be distinct.
+  MArray& AddConstraint(const DistinctElements& constraint);
+  // The array's elements must be separated by this whitespace.
+  MArray& AddConstraint(const IOSeparator& constraint);
+  // The array should be approximately this size.
+  MArray& AddConstraint(const SizeCategory& constraint);
 
   // Typename()
   //
@@ -182,17 +207,27 @@ MArray(MoriartyElementType) -> MArray<MoriartyElementType>;
 //   `NestedMArray(MArray(MInteger()))`
 //   `NestedMArray(NestedMArray(MArray(MInteger())))`
 //   `NestedMArray(NestedMArray(MInteger()))`
-template <typename MoriartyElementType>
-MArray<MArray<MoriartyElementType>> NestedMArray(
-    MArray<MoriartyElementType> elements) {
-  return MArray<MArray<MoriartyElementType>>(std::move(elements));
+template <typename MElementType, typename... Constraints>
+  requires std::constructible_from<MArray<MElementType>, Constraints...>
+MArray<MArray<MElementType>> NestedMArray(MArray<MElementType> elements,
+                                          Constraints&&... constraints) {
+  MArray<MArray<MElementType>> res(std::move(elements));
+  (res.AddConstraint(std::forward<Constraints>(constraints)), ...);
+  return res;
 }
 
 // -----------------------------------------------------------------------------
 //  Template Implementation Below
 
 template <typename MElementType>
-MArray<MElementType>::MArray() {
+MArray<MElementType>::MArray(MElementType element_constraints)
+    : MArray<MElementType>(
+          Elements<MElementType>(std::move(element_constraints))) {}
+
+template <typename MElementType>
+template <typename... Constraints>
+  requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+MArray<MElementType>::MArray(Constraints&&... constraints) {
   static_assert(
       std::derived_from<MElementType,
                         librarian::MVariable<
@@ -200,18 +235,43 @@ MArray<MElementType>::MArray() {
       "The T used in MArray<T> must be a Moriarty variable. For example, "
       "MArray<MInteger> or MArray<MCustomType>.");
   this->RegisterKnownProperty("size", &MArray<MElementType>::OfSizeProperty);
+  (AddConstraint(std::forward<Constraints>(constraints)), ...);
 }
 
 template <typename MElementType>
-MArray<MElementType>::MArray(MElementType variable)
-    : element_constraints_(std::move(variable)) {
-  static_assert(
-      std::derived_from<MElementType,
-                        librarian::MVariable<
-                            MElementType, typename MElementType::value_type>>,
-      "The T used in MArray<T> must be a Moriarty variable. For example, "
-      "MArray<MInteger> or MArray<MCustomType>.");
-  this->RegisterKnownProperty("size", &MArray<MElementType>::OfSizeProperty);
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const Exactly<vector_value_type>& constraint) {
+  return this->Is(constraint.GetValue());
+}
+
+template <typename MElementType>
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const Elements<MElementType>& constraint) {
+  return Of(constraint.GetConstraints());
+}
+
+template <typename MElementType>
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const Length& constraint) {
+  return OfLength(constraint.GetConstraints());
+}
+
+template <typename MElementType>
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const DistinctElements& constraint) {
+  return WithDistinctElements();
+}
+
+template <typename MElementType>
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const IOSeparator& constraint) {
+  return WithSeparator(constraint.GetSeparator());
+}
+
+template <typename MElementType>
+MArray<MElementType>& MArray<MElementType>::AddConstraint(
+    const SizeCategory& constraint) {
+  return AddConstraint(Length(constraint));
 }
 
 template <typename MElementType>

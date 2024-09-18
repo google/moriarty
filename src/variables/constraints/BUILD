@@ -43,6 +43,27 @@ cc_library(
 )
 
 cc_library(
+    name = "container_constraints",
+    srcs = ["container_constraints.cc"],
+    hdrs = ["container_constraints.h"],
+    deps = [
+        ":base_constraints",
+        "@absl//absl/strings:string_view",
+        "//src/variables:minteger",
+    ],
+)
+
+cc_library(
+    name = "io_constraints",
+    srcs = ["io_constraints.cc"],
+    hdrs = ["io_constraints.h"],
+    deps = [
+        ":base_constraints",
+        "//src/librarian:io_config",
+    ],
+)
+
+cc_library(
     name = "size_constraints",
     srcs = ["size_constraints.cc"],
     hdrs = ["size_constraints.h"],
@@ -53,6 +74,16 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "string_constraints",
+    srcs = ["string_constraints.cc"],
+    hdrs = ["string_constraints.h"],
+    deps = [
+        ":base_constraints",
+        "@absl//absl/strings:string_view",
+    ],
+)
+
 cc_test(
     name = "base_constraints_test",
     srcs = ["base_constraints_test.cc"],
@@ -60,6 +91,28 @@ cc_test(
         ":base_constraints",
         "@com_google_googletest//:gtest_main",
         "@absl//absl/strings:string_view",
+    ],
+)
+
+cc_test(
+    name = "container_constraints_test",
+    srcs = ["container_constraints_test.cc"],
+    deps = [
+        ":container_constraints",
+        ":numeric_constraints",
+        "@com_google_googletest//:gtest_main",
+        "//src/librarian:test_utils",
+        "//src/variables:minteger",
+    ],
+)
+
+cc_test(
+    name = "io_constraints_test",
+    srcs = ["io_constraints_test.cc"],
+    deps = [
+        ":io_constraints",
+        "@com_google_googletest//:gtest_main",
+        "//src/librarian:io_config",
     ],
 )
 
@@ -80,5 +133,15 @@ cc_test(
         ":size_constraints",
         "@com_google_googletest//:gtest_main",
         "//src/librarian:size_property",
+    ],
+)
+
+cc_test(
+    name = "string_constraints_test",
+    srcs = ["string_constraints_test.cc"],
+    deps = [
+        ":string_constraints",
+        "@com_google_googletest//:gtest_main",
+        "@absl//absl/container:flat_hash_set",
     ],
 )

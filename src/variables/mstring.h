@@ -17,9 +17,11 @@
 #ifndef MORIARTY_SRC_VARIABLES_MSTRING_H_
 #define MORIARTY_SRC_VARIABLES_MSTRING_H_
 
+#include <concepts>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "absl/status/status.h"
@@ -28,6 +30,10 @@
 #include "src/internal/simple_pattern.h"
 #include "src/librarian/mvariable.h"
 #include "src/property.h"
+#include "src/variables/constraints/base_constraints.h"
+#include "src/variables/constraints/container_constraints.h"
+#include "src/variables/constraints/size_constraints.h"
+#include "src/variables/constraints/string_constraints.h"
 #include "src/variables/minteger.h"
 
 namespace moriarty {
@@ -50,7 +56,24 @@ class MString : public moriarty::librarian::MVariable<MString, std::string> {
   constexpr static absl::string_view kLowerAlphaNumeric =
       "abcdefghijklmnopqrstuvwxyz0123456789";
 
-  MString();
+  // Create an MString from a set of constraints. Logically equivalent to
+  // calling AddConstraint() for each constraint.
+  template <typename... Constraints>
+    requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+  explicit MString(Constraints&&... constraints);
+
+  // The string must be exactly this value.
+  MString& AddConstraint(const Exactly<std::string>& constraint);
+  // The string must be this length.
+  MString& AddConstraint(const Length& constraint);
+  // The string must be made of these characters.
+  MString& AddConstraint(const Alphabet& constraint);
+  // The string must have distinct characters.
+  MString& AddConstraint(const DistinctCharacters& constraint);
+  // The string must match this simple pattern.
+  MString& AddConstraint(const SimplePattern& constraint);
+  // The string should be approximately this size.
+  MString& AddConstraint(const SizeCategory& constraint);
 
   [[nodiscard]] std::string Typename() const override { return "MString"; }
 
@@ -142,6 +165,17 @@ class MString : public moriarty::librarian::MVariable<MString, std::string> {
       const std::string& value) const override;
   // ---------------------------------------------------------------------------
 };
+
+// -----------------------------------------------------------------------------
+//  Implementation details
+// -----------------------------------------------------------------------------
+
+template <typename... Constraints>
+  requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
+MString::MString(Constraints&&... constraints) {
+  RegisterKnownProperty("size", &MString::OfSizeProperty);
+  (AddConstraint(std::forward<Constraints>(constraints)), ...);
+}
 
 }  // namespace moriarty
 
