@@ -28,11 +28,6 @@
 
 namespace moriarty {
 
-// Needed for testing comparisons.
-bool operator==(const moriarty::Range& lhs, const moriarty::Range& rhs) {
-  return lhs.Extremes() == rhs.Extremes();
-}
-
 namespace librarian {
 namespace {
 

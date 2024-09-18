@@ -20,6 +20,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -76,6 +77,8 @@ absl::Status Range::AtMost(absl::string_view integer_expression) {
   max_exprs_.push_back(std::move(*expr));
   return absl::OkStatus();
 }
+
+bool Range::IsEmpty() const { return min_ > max_; }
 
 namespace {
 
@@ -179,6 +182,26 @@ std::string Range::ToString() const {
     return absl::Substitute("[$0, inf)", *min_bounds);
 
   return absl::Substitute("[$0, $1]", *min_bounds, *max_bounds);
+}
+
+bool operator==(const Range& r1, const Range& r2) {
+  // Invalid ranges are never equal (similar to NaN).
+  if (!r1.parameter_status_.ok() || !r2.parameter_status_.ok()) return false;
+  if (r1.IsEmpty() || r2.IsEmpty()) return r1.IsEmpty() == r2.IsEmpty();
+
+  if (std::tie(r1.min_, r1.max_) != std::tie(r2.min_, r2.max_)) return false;
+  if (r1.min_exprs_.size() != r2.min_exprs_.size() ||
+      r1.max_exprs_.size() != r2.max_exprs_.size())
+    return false;
+  for (int i = 0; i < r1.min_exprs_.size(); ++i) {
+    if (r1.min_exprs_[i].ToString() != r2.min_exprs_[i].ToString())
+      return false;
+  }
+  for (int i = 0; i < r1.max_exprs_.size(); ++i) {
+    if (r1.max_exprs_[i].ToString() != r2.max_exprs_[i].ToString())
+      return false;
+  }
+  return true;
 }
 
 Range EmptyRange() { return Range(0, -1); }

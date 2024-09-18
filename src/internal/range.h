@@ -21,7 +21,6 @@
 #include <limits>
 #include <optional>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
@@ -93,9 +92,17 @@ class Range {
   // Returns a non-OK status if parsing fails.
   absl::Status AtMost(absl::string_view integer_expression);
 
+  // IsEmpty()
+  //
+  // Returns true if the range is empty.
+  [[nodiscard]] bool IsEmpty() const;
+
   struct ExtremeValues {
     int64_t min;
     int64_t max;
+
+    friend bool operator==(const ExtremeValues& e1,
+                           const ExtremeValues& e2) = default;
   };
 
   // Extremes()
@@ -122,11 +129,12 @@ class Range {
   // Returns a string representation of this range.
   [[nodiscard]] std::string ToString() const;
 
-  // Determine if two ExtremeValues are equal. Used mainly for testing.
-  friend bool operator==(const Range::ExtremeValues& e1,
-                         const Range::ExtremeValues& e2) {
-    return std::tie(e1.min, e1.max) == std::tie(e2.min, e2.max);
-  }
+  // Determine if two Ranges are equal.
+  //
+  // The exact implementation is not guaranteed to be stable over time.
+  // For now, Range.AtMost(5) and Range.AtMost("5") are considered different and
+  // insertion order of expressions matters, but may not in the future.
+  friend bool operator==(const Range& r1, const Range& r2);
 
  private:
   int64_t min_ = std::numeric_limits<int64_t>::min();

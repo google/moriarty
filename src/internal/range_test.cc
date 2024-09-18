@@ -39,6 +39,7 @@ Range Intersect(Range r1, const Range& r2) {
   return r1;
 }
 
+// Checks if two ranges are equal, taking into account any expressions.
 testing::AssertionResult EqualRanges(const Range& r1, const Range& r2) {
   auto extremes1 = r1.Extremes();
   auto extremes2 = r2.Extremes();
@@ -75,6 +76,7 @@ testing::AssertionResult EqualRanges(const Range& r1, const Range& r2) {
          << "[" << (*extremes2)->min << ", " << (*extremes2)->max << "]";
 }
 
+// Checks if a range is empty, taking into account any expressions.
 testing::AssertionResult IsEmptyRange(const Range& r) {
   auto extremes = r.Extremes();
   if (!extremes.ok())
@@ -104,11 +106,46 @@ TEST(RangeTest, IntersectNonEmptyIntersectionsWork) {
 TEST(RangeTest, EmptyRangeWorks) {
   EXPECT_TRUE(IsEmptyRange({0, -1}));
   EXPECT_TRUE(IsEmptyRange({10, 2}));
+  EXPECT_TRUE(Range(0, -1).IsEmpty());
+  EXPECT_TRUE(Range(10, 2).IsEmpty());
 
   EXPECT_FALSE(IsEmptyRange({0, 0}));
   EXPECT_FALSE(IsEmptyRange({5, 10}));
+  EXPECT_FALSE(Range(0, 0).IsEmpty());
+  EXPECT_FALSE(Range(5, 10).IsEmpty());
 
   EXPECT_TRUE(IsEmptyRange(EmptyRange()));
+  EXPECT_TRUE(EmptyRange().IsEmpty());
+}
+
+TEST(RangeTest, EqualityWorks) {
+  // Normal cases
+  EXPECT_EQ(Range(1, 2), Range(1, 2));
+  EXPECT_NE(Range(1, 3), Range(1, 2));
+  Range r;
+  r.AtLeast(1);
+  r.AtMost(2);
+  EXPECT_EQ(r, Range(1, 2));
+  EXPECT_EQ(EmptyRange(), Range(10, 5));
+
+  // Expressions are considered. This is not guaranteed to be stable over time.
+  Range r1;
+  r1.AtLeast(1);
+  r1.AtMost(2);
+  Range r2;
+  MORIARTY_ASSERT_OK(r2.AtLeast("1"));
+  MORIARTY_ASSERT_OK(r2.AtMost("2"));
+  EXPECT_NE(r1, r2);
+
+  Range r3(1, 4);
+  MORIARTY_ASSERT_OK(r3.AtLeast("a"));
+  MORIARTY_ASSERT_OK(r3.AtMost("b"));
+  Range r4;
+  r4.AtLeast(1);
+  r4.AtMost(4);
+  MORIARTY_ASSERT_OK(r4.AtLeast("a"));
+  MORIARTY_ASSERT_OK(r4.AtMost("b"));
+  EXPECT_EQ(r3, r4);
 }
 
 TEST(RangeTest, EmptyIntersectionsWork) {
