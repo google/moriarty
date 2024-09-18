@@ -157,6 +157,7 @@ cc_library(
     hdrs = ["size_property.h"],
     deps = [
         "@absl//absl/log:absl_check",
+        "@absl//absl/strings:string_view",
         "//src/internal:range",
     ],
 )

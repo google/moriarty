@@ -25,7 +25,6 @@
 #include "absl/algorithm/container.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
-#include "absl/meta/type_traits.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -161,13 +160,13 @@ absl::Status MInteger::OfSizeProperty(Property property) {
         "Property's category must be 'size' in OfSizeProperty()");
   }
 
-  auto it = sizes_string_mapping_.find(property.descriptor);
-  if (it == sizes_string_mapping_.end()) {
+  CommonSize size = librarian::CommonSizeFromString(property.descriptor);
+  if (size == CommonSize::kUnknown) {
     return absl::InvalidArgumentError(
         absl::Substitute("Unknown size: $0", property.descriptor));
   }
 
-  WithSize(it->second);
+  WithSize(size);
   return absl::OkStatus();
 }
 

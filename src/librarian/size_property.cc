@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/log/absl_check.h"
+#include "absl/strings/string_view.h"
 #include "src/internal/range.h"
 
 namespace moriarty {
@@ -155,24 +156,36 @@ moriarty::Range GetMaxRange(int64_t N) {
 std::string ToString(CommonSize size) {
   switch (size) {
     case CommonSize::kAny:
-      return "Any";
+      return "any";
     case CommonSize::kMin:
-      return "Min";
+      return "min";
     case CommonSize::kMax:
-      return "Max";
+      return "max";
     case CommonSize::kSmall:
-      return "Small";
+      return "small";
     case CommonSize::kMedium:
-      return "Medium";
+      return "medium";
     case CommonSize::kLarge:
-      return "Large";
+      return "large";
     case CommonSize::kTiny:
-      return "Tiny";
+      return "tiny";
     case CommonSize::kHuge:
-      return "Huge";
+      return "huge";
     default:
       ABSL_CHECK(false) << "Unknown size";
   }
+}
+
+CommonSize CommonSizeFromString(absl::string_view size) {
+  if (size == "any") return CommonSize::kAny;
+  if (size == "min") return CommonSize::kMin;
+  if (size == "max") return CommonSize::kMax;
+  if (size == "small") return CommonSize::kSmall;
+  if (size == "medium") return CommonSize::kMedium;
+  if (size == "large") return CommonSize::kLarge;
+  if (size == "tiny") return CommonSize::kTiny;
+  if (size == "huge") return CommonSize::kHuge;
+  return CommonSize::kUnknown;
 }
 
 }  // namespace librarian

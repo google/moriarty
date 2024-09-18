@@ -27,7 +27,6 @@
 #include "src/util/test_status_macro/status_testutil.h"
 
 namespace moriarty {
-
 namespace librarian {
 namespace {
 
@@ -289,14 +288,27 @@ TEST(SizePropertyTest, MergeSizesWithRelatedSizesReturnsSmallerVersion) {
 }
 
 TEST(SizePropertyTest, ToStringShouldWork) {
-  EXPECT_EQ(ToString(CommonSize::kMin), "Min");
-  EXPECT_EQ(ToString(CommonSize::kTiny), "Tiny");
-  EXPECT_EQ(ToString(CommonSize::kSmall), "Small");
-  EXPECT_EQ(ToString(CommonSize::kMedium), "Medium");
-  EXPECT_EQ(ToString(CommonSize::kLarge), "Large");
-  EXPECT_EQ(ToString(CommonSize::kHuge), "Huge");
-  EXPECT_EQ(ToString(CommonSize::kMax), "Max");
-  EXPECT_EQ(ToString(CommonSize::kAny), "Any");
+  EXPECT_EQ(ToString(CommonSize::kMin), "min");
+  EXPECT_EQ(ToString(CommonSize::kTiny), "tiny");
+  EXPECT_EQ(ToString(CommonSize::kSmall), "small");
+  EXPECT_EQ(ToString(CommonSize::kMedium), "medium");
+  EXPECT_EQ(ToString(CommonSize::kLarge), "large");
+  EXPECT_EQ(ToString(CommonSize::kHuge), "huge");
+  EXPECT_EQ(ToString(CommonSize::kMax), "max");
+  EXPECT_EQ(ToString(CommonSize::kAny), "any");
+}
+
+TEST(SizePropertyTest, FromStringHappyPathShouldWork) {
+  EXPECT_EQ(CommonSizeFromString("min"), CommonSize::kMin);
+  EXPECT_EQ(CommonSizeFromString("tiny"), CommonSize::kTiny);
+  EXPECT_EQ(CommonSizeFromString("small"), CommonSize::kSmall);
+  EXPECT_EQ(CommonSizeFromString("medium"), CommonSize::kMedium);
+  EXPECT_EQ(CommonSizeFromString("large"), CommonSize::kLarge);
+  EXPECT_EQ(CommonSizeFromString("huge"), CommonSize::kHuge);
+  EXPECT_EQ(CommonSizeFromString("max"), CommonSize::kMax);
+  EXPECT_EQ(CommonSizeFromString("any"), CommonSize::kAny);
+
+  EXPECT_EQ(CommonSizeFromString("words"), CommonSize::kUnknown);
 }
 
 }  // namespace

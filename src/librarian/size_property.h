@@ -33,6 +33,7 @@
 #include <optional>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "src/internal/range.h"
 
 namespace moriarty {
@@ -46,6 +47,10 @@ enum class CommonSize {
   kLarge,
   kTiny,  // Start of "Secondary"
   kHuge,
+
+  // Additional values that are not part of the main enum. These should not be
+  // considered as a size. (E.g., ToString(kUnknown) is not valid).
+  kUnknown,
   kThisEnumIsNotAnExhaustiveListMoreItemsMayBeAddedInTheFuture
 };
 
@@ -114,6 +119,14 @@ namespace librarian {
 //
 // Returns a string representation of the size.
 [[nodiscard]] std::string ToString(CommonSize size);
+
+// CommonSizeFromString()
+//
+// Returns the CommonSize corresponding to the string. The string name for each
+// size is lowercase version without the k. "CommonSize::kFoo" -> "foo".
+//
+// Returns kUnknown if the string is not a valid CommonSize.
+[[nodiscard]] CommonSize CommonSizeFromString(absl::string_view size);
 
 }  // namespace librarian
 }  // namespace moriarty

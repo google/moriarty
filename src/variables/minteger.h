@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -148,12 +147,6 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
 
  private:
   Range bounds_;
-
-  absl::flat_hash_map<std::string, CommonSize> sizes_string_mapping_ = {
-      {"min", CommonSize::kMin},     {"tiny", CommonSize::kTiny},
-      {"small", CommonSize::kSmall}, {"medium", CommonSize::kMedium},
-      {"large", CommonSize::kLarge}, {"huge", CommonSize::kHuge},
-      {"max", CommonSize::kMax}};
 
   // What approximate size should the int64_t be when it is generated.
   CommonSize approx_size_ = CommonSize::kAny;
