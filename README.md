@@ -1,15 +1,12 @@
 # Moriarty
 
-<center>
-  <div style="margin:auto; max-width:400px;">
-    <img width="250px" src="logo.png">
-    <br/>
-    <p style="text-align:center; font-style: italic;">
-      Create robust data generators and data validators with little-to-no
-      boilerplate code based on just a description of the data.
-    </p>
-  </div>
-</center>
+<p align="center">
+  <img width="250px" src="logo.png" alt="Moriarty Logo">
+</p>
+<p align="center">
+  <em>Create robust data generators and data validators with little-to-no
+  boilerplate code based on just a description of the data.</em>
+</p>
 
 ## What is Moriarty?
 
