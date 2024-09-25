@@ -17,6 +17,8 @@
 #ifndef MORIARTY_SRC_VARIABLES_CONSTRAINTS_SIZE_CONSTRAINTS_H_
 #define MORIARTY_SRC_VARIABLES_CONSTRAINTS_SIZE_CONSTRAINTS_H_
 
+#include <string>
+
 #include "absl/strings/string_view.h"
 #include "src/librarian/size_property.h"
 #include "src/variables/constraints/base_constraints.h"
@@ -64,6 +66,9 @@ class SizeCategory : public MConstraint {
 
   // Returns the underlying size.
   [[nodiscard]] CommonSize GetCommonSize() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   CommonSize size_;

@@ -16,6 +16,9 @@
 
 #include "src/variables/constraints/container_constraints.h"
 
+#include <string>
+
+#include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "src/variables/constraints/base_constraints.h"
 #include "src/variables/minteger.h"
@@ -25,5 +28,9 @@ namespace moriarty {
 MInteger Length::GetConstraints() const { return length_; }
 
 Length::Length(absl::string_view expression) : length_(Exactly(expression)) {}
+
+std::string Length::ToString() const {
+  return absl::StrCat("Length(", length_.ToString(), ")");
+}
 
 }  // namespace moriarty

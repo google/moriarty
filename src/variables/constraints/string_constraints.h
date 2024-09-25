@@ -31,6 +31,8 @@ class Alphabet : public MConstraint {
   // The string must only contain characters from the given alphabet.
   explicit Alphabet(absl::string_view alphabet);
 
+  // TODO(darcybest): Consider having allowing a container of chars as well.
+
   // The string must only contain English letters (A-Z, a-z).
   static Alphabet Letters();
   // The string must only contain uppercase English letters (A-Z).
@@ -48,6 +50,9 @@ class Alphabet : public MConstraint {
 
   // Returns the alphabet that the string must only contain characters from.
   [[nodiscard]] std::string GetAlphabet() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   std::string alphabet_;
@@ -76,6 +81,9 @@ class SimplePattern : public MConstraint {
 
   // Returns the pattern that the string must match.
   [[nodiscard]] std::string GetPattern() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   std::string pattern_;

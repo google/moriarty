@@ -20,6 +20,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/status/status.h"
+#include "src/librarian/io_config.h"
 #include "src/librarian/mvariable.h"
 #include "src/librarian/test_utils.h"
 #include "src/util/test_status_macro/status_testutil.h"
@@ -63,11 +64,46 @@ TEST(MTupleTest, PrintShouldSucceed) {
       IsOkAndHolds("1 2 5 6"));
 }
 
+TEST(MTupleTest, PrintWithProperSeparatorShouldSucceed) {
+  EXPECT_THAT(Print(MTuple(MInteger(), MInteger(), MInteger())
+                        .WithSeparator(Whitespace::kNewline),
+                    {1, 22, 333}),
+              IsOkAndHolds("1\n22\n333"));
+  EXPECT_THAT(Print(MTuple(MInteger(), MString(), MInteger())
+                        .WithSeparator(Whitespace::kTab),
+                    {1, "twotwo", 333}),
+              IsOkAndHolds("1\ttwotwo\t333"));
+}
+
 TEST(MTupleTest, TypicalReadCaseWorks) {
   EXPECT_THAT(Read(MTuple(MInteger(), MInteger(), MInteger()), "1 22 333"),
               IsOkAndHolds(FieldsAre(1, 22, 333)));
   EXPECT_THAT(Read(MTuple(MInteger(), MString(), MInteger()), "1 twotwo 333"),
               IsOkAndHolds(FieldsAre(1, "twotwo", 333)));
+}
+
+TEST(MTupleTest, ReadWithProperSeparatorShouldSucceed) {
+  EXPECT_THAT(Read(MTuple(MInteger(), MInteger(), MInteger())
+                       .WithSeparator(Whitespace::kNewline),
+                   "1\n22\n333"),
+              IsOkAndHolds(FieldsAre(1, 22, 333)));
+  EXPECT_THAT(Read(MTuple(MInteger(), MString(), MInteger())
+                       .WithSeparator(Whitespace::kTab),
+                   "1\ttwotwo\t333"),
+              IsOkAndHolds(FieldsAre(1, "twotwo", 333)));
+}
+
+TEST(MTupleTest, ReadWithIncorrectSeparatorShouldFail) {
+  EXPECT_THAT(Read(MTuple(MInteger(), MInteger(), MInteger()), "1\t22\t333"),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Read(MTuple(MInteger(), MInteger(), MInteger())
+                       .WithSeparator(Whitespace::kNewline),
+                   "1 22 333"),
+              StatusIs(absl::StatusCode::kInvalidArgument));
+  EXPECT_THAT(Read(MTuple(MInteger(), MString(), MInteger())
+                       .WithSeparator(Whitespace::kTab),
+                   "1\ttwotwo 333"),
+              StatusIs(absl::StatusCode::kInvalidArgument));
 }
 
 TEST(MTupleTest, ReadingTheWrongTypeShouldFail) {
@@ -236,6 +272,28 @@ TEST(MTupleTest, PropertiesCanBePassedToMultipleDifferentTypes) {
                  .OfLength(MInteger().Between(1, 1000)))
           .WithKnownProperty({.category = "size", .descriptor = "small"}),
       GeneratedValuesAre(FieldsAre(Le(100L), SizeIs(Le(100L)))));
+}
+
+TEST(MTupleTest, MultipleIOSeparatorsShouldFailGenerationAndReadAndPrint) {
+  EXPECT_THAT(Generate(MTuple(MInteger(), MInteger())
+                           .WithSeparator(Whitespace::kNewline)
+                           .WithSeparator(Whitespace::kTab)),
+              StatusIs(absl::StatusCode::kFailedPrecondition));
+  EXPECT_THAT(Read(MTuple(MInteger(), MInteger())
+                       .WithSeparator(Whitespace::kNewline)
+                       .WithSeparator(Whitespace::kTab),
+                   "1 2"),
+              StatusIs(absl::StatusCode::kFailedPrecondition));
+  EXPECT_THAT(Print(MTuple(MInteger(), MInteger())
+                        .WithSeparator(Whitespace::kNewline)
+                        .WithSeparator(Whitespace::kTab),
+                    {1, 2}),
+              StatusIs(absl::StatusCode::kFailedPrecondition));
+  EXPECT_THAT(
+      MTuple(MInteger(), MInteger())
+          .WithSeparator(Whitespace::kNewline)
+          .WithSeparator(Whitespace::kTab),
+      IsNotSatisfiedWith(std::tuple<int64_t, int64_t>({1, 2}), "separator"));
 }
 
 }  // namespace

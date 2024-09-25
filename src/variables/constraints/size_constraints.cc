@@ -16,7 +16,10 @@
 
 #include "src/variables/constraints/size_constraints.h"
 
+#include <string>
+
 #include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 #include "src/librarian/size_property.h"
 
 namespace moriarty {
@@ -38,5 +41,9 @@ SizeCategory SizeCategory::Huge() { return SizeCategory(CommonSize::kHuge); }
 SizeCategory SizeCategory::Max() { return SizeCategory(CommonSize::kMax); }
 
 CommonSize SizeCategory::GetCommonSize() const { return size_; }
+
+std::string SizeCategory::ToString() const {
+  return absl::Substitute("SizeCategory($0)", librarian::ToString(size_));
+}
 
 }  // namespace moriarty

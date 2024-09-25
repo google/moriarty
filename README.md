@@ -17,9 +17,10 @@ expressive syntax.
 int main() {
   Moriarty M;
   M.SetName("Example Constraints")
-      .AddVariable("N", MInteger().Between(1, 100))
-      .AddVariable("A", MArray(MInteger().Between(3, 5)).OfLength("3 * N + 1"))
-      .AddVariable("S", MString().WithAlphabet("abc").OfLength("N"))
+      .AddVariable("N", MInteger(Between(1, 100)))
+      .AddVariable("A", MArray<MInteger>(Elements<MInteger>(Between(3, 5)),
+                                         Length("3 * N + 1")))
+      .AddVariable("S", MString(Alphabet("abc"), Length("N")))
       .AddGenerator("CornerCaseGenerator", CustomCornerCaseGenerator())
       .AddGenerator("SmallExamples", SmallCaseGenerator());
   M.GenerateTestCases();
@@ -27,16 +28,16 @@ int main() {
 }
 ```
 
-Example output from example:
+Example output from example (where N = 2):
 
 ```
 2 ab
 3 4 5 4 3 4 5
 ```
 
-`MVariable`'s are used to describe a specific data type (primitive type, class,
+`MVariable`s are used to describe a specific data type (primitive type, class,
 struct, proto, etc.) and are written in a way to allow users to put constraints
-on variables. The Moriarty team provides several `MVariables` for common data
+on variables. The Moriarty team provides several `MVariable`s for common data
 types but also allows experts to write their own custom types.
 
 Users are then able to describe their variables and constraints and either:
@@ -47,4 +48,5 @@ Users are then able to describe their variables and constraints and either:
 We provide several defaults for generation, importing, exporting, and
 verification but also allows users to customize to their heart's content!
 
-Start <a href="docs/getting_started.md">here</a> for a tutorial walking you through a full Moriarty example.
+Start <a href="docs/getting_started.md">here</a> for a tutorial walking you
+through a full Moriarty example.

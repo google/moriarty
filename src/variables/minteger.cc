@@ -54,8 +54,17 @@ MInteger& MInteger::AddConstraint(const Exactly<int64_t>& constraint) {
 
 MInteger& MInteger::AddConstraint(const Exactly<std::string>& constraint) {
   Range r;
-  r.AtLeast(constraint.GetValue()).IgnoreError();
-  r.AtMost(constraint.GetValue()).IgnoreError();
+  if (absl::Status status = r.AtLeast(constraint.GetValue()); !status.ok()) {
+    DeclareSelfAsInvalid(UnsatisfiedConstraintError(
+        absl::StrCat("Exactly() ", status.message())));
+    return *this;
+  }
+  if (absl::Status status = r.AtMost(constraint.GetValue()); !status.ok()) {
+    DeclareSelfAsInvalid(UnsatisfiedConstraintError(
+        absl::StrCat("Exactly() ", status.message())));
+    return *this;
+  }
+
   bounds_.Intersect(r);
   return *this;
 }
@@ -76,64 +85,59 @@ MInteger& MInteger::AddConstraint(const class AtLeast& constraint) {
 }
 
 MInteger& MInteger::AddConstraint(const SizeCategory& constraint) {
-  // TODO(darcybest): This should be MergedSize.
-  approx_size_ = constraint.GetCommonSize();
+  std::optional<CommonSize> size =
+      librarian::MergeSizes(approx_size_, constraint.GetCommonSize());
+  if (size) {
+    approx_size_ = *size;
+  } else {
+    DeclareSelfAsInvalid(UnsatisfiedConstraintError(
+        absl::Substitute("Invalid size. Unable to be both $0 and $1.",
+                         librarian::ToString(constraint.GetCommonSize()),
+                         librarian::ToString(approx_size_))));
+  }
   return *this;
 }
 
 MInteger& MInteger::Is(absl::string_view integer_expression) {
-  return Between(integer_expression, integer_expression);
+  return AddConstraint(Exactly(integer_expression));
 }
 
 MInteger& MInteger::Between(int64_t minimum, int64_t maximum) {
-  AtLeast(minimum);
-  AtMost(maximum);
-  return *this;
+  return AddConstraint(::moriarty::Between(minimum, maximum));
 }
 
 MInteger& MInteger::Between(absl::string_view minimum_integer_expression,
                             absl::string_view maximum_integer_expression) {
-  AtLeast(minimum_integer_expression);
-  AtMost(maximum_integer_expression);
-  return *this;
+  return AddConstraint(::moriarty::Between(minimum_integer_expression,
+                                           maximum_integer_expression));
 }
 
 MInteger& MInteger::Between(int64_t minimum,
                             absl::string_view maximum_integer_expression) {
-  AtLeast(minimum);
-  AtMost(maximum_integer_expression);
-  return *this;
+  return AddConstraint(
+      ::moriarty::Between(minimum, maximum_integer_expression));
 }
 
 MInteger& MInteger::Between(absl::string_view minimum_integer_expression,
                             int64_t maximum) {
-  AtLeast(minimum_integer_expression);
-  AtMost(maximum);
-  return *this;
+  return AddConstraint(
+      ::moriarty::Between(minimum_integer_expression, maximum));
 }
 
 MInteger& MInteger::AtLeast(int64_t minimum) {
-  bounds_.AtLeast(minimum);
-  return *this;
+  return AddConstraint(::moriarty::AtLeast(minimum));
 }
 
 MInteger& MInteger::AtLeast(absl::string_view minimum_integer_expression) {
-  // Note: We are ignoring the error here since it will bubble up later when it
-  // is used. We should consider adding `TryAtLeast()`.
-  bounds_.AtLeast(minimum_integer_expression).IgnoreError();
-  return *this;
+  return AddConstraint(::moriarty::AtLeast(minimum_integer_expression));
 }
 
 MInteger& MInteger::AtMost(int64_t maximum) {
-  bounds_.AtMost(maximum);
-  return *this;
+  return AddConstraint(::moriarty::AtMost(maximum));
 }
 
 MInteger& MInteger::AtMost(absl::string_view maximum_integer_expression) {
-  // Note: We are ignoring the error here since it will bubble up later when it
-  // is used. We should consider adding `TryAtMost()`.
-  bounds_.AtMost(maximum_integer_expression).IgnoreError();
-  return *this;
+  return AddConstraint(::moriarty::AtMost(maximum_integer_expression));
 }
 
 std::optional<int64_t> MInteger::GetUniqueValueImpl() const {
@@ -183,8 +187,7 @@ absl::StatusOr<Range::ExtremeValues> MInteger::GetExtremeValues() const {
 }
 
 MInteger& MInteger::WithSize(CommonSize size) {
-  approx_size_ = size;
-  return *this;
+  return AddConstraint(SizeCategory(size));
 }
 
 absl::Status MInteger::OfSizeProperty(Property property) {

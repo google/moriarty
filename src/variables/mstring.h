@@ -40,8 +40,14 @@ namespace moriarty {
 
 // MString
 //
-// The native string component for Moriarty.
-class MString : public moriarty::librarian::MVariable<MString, std::string> {
+// Describes constraints placed on an string. The characters in the string must
+// be printable ASCII characters. In general (especially in I/O functions), it
+// is assumed that strings do not contain whitespace.
+//
+// In order to generate, the length and the alphabet must be constrained (via
+// some combination of the `Length`, `Alphabet`, and `SimplePattern`
+// constraints).
+class MString : public librarian::MVariable<MString, std::string> {
  public:
   // Common alphabets to use for `WithAlphabet()`.
   constexpr static absl::string_view kAlphabet =
@@ -58,6 +64,8 @@ class MString : public moriarty::librarian::MVariable<MString, std::string> {
 
   // Create an MString from a set of constraints. Logically equivalent to
   // calling AddConstraint() for each constraint.
+  //
+  // E.g., MString(Length(10), Alphabet("abc")).
   template <typename... Constraints>
     requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
   explicit MString(Constraints&&... constraints);
@@ -98,12 +106,7 @@ class MString : public moriarty::librarian::MVariable<MString, std::string> {
 
   // WithAlphabet()
   //
-  // Sets the valid set of characters that this string will be made of
-  //
-  // TODO(b/208296393): We may wish for this to be a set of chars in the future,
-  // but for now, this is much easier for the user to write. We may also want
-  // enums for common types (decimal, hex, lower, upper, alpha, alphanumeric,
-  // etc).
+  // Sets the valid set of characters that this string will be made of.
   MString& WithAlphabet(absl::string_view valid_characters);
 
   // WithDistinctCharacters()
@@ -141,7 +144,7 @@ class MString : public moriarty::librarian::MVariable<MString, std::string> {
 
   std::optional<Property> length_size_property_;
 
-  std::optional<moriarty_internal::SimplePattern> simple_pattern_;
+  std::vector<moriarty_internal::SimplePattern> simple_patterns_;
 
   absl::StatusOr<std::string> GenerateSimplePattern();
 

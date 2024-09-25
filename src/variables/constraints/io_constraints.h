@@ -17,6 +17,8 @@
 #ifndef MORIARTY_SRC_VARIABLES_CONSTRAINTS_IO_CONSTRAINTS_H_
 #define MORIARTY_SRC_VARIABLES_CONSTRAINTS_IO_CONSTRAINTS_H_
 
+#include <string>
+
 #include "src/librarian/io_config.h"
 #include "src/variables/constraints/base_constraints.h"
 
@@ -31,6 +33,9 @@ class IOSeparator : public MConstraint {
 
   // Returns the separator to use between elements of a container.
   [[nodiscard]] Whitespace GetSeparator() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   Whitespace separator_;

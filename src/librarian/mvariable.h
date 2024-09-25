@@ -72,7 +72,7 @@ namespace librarian {
 //   by this MVariable.
 //
 // E.g.,
-// class MInteger : public moriarty::librarian::MVariable<MInteger, int64_t> {}
+// class MInteger : public librarian::MVariable<MInteger, int64_t> {}
 template <typename VariableType, typename ValueType>
 class MVariable : public moriarty_internal::AbstractVariable {
  public:
@@ -591,6 +591,14 @@ class MVariable : public moriarty_internal::AbstractVariable {
                                librarian::MVariable<T, typename T::value_type>>
   std::vector<std::string> GetDependencies(T variable) const;
 
+  // DeclareSelfAsInvalid() [Helper for Librarians]
+  //
+  // Sets the status of this variable to `status`. This must be a non-ok
+  // Moriarty Status. Almost surely an `UnsatisfiedConstraintError()`. All
+  // future calls to FooImpl() that return an absl::Status will be intercepted
+  // and return this instead. (E.g., GenerateImpl(), PrintImpl(), etc.)
+  void DeclareSelfAsInvalid(absl::Status status);
+
  private:
   // `is_one_of_` is a list of values that Generate() should produce. If the
   // optional is set and the list is empty, then there are no viable values.
@@ -623,6 +631,11 @@ class MVariable : public moriarty_internal::AbstractVariable {
   // The known properties of this variable. Maps from category -> function.
   absl::flat_hash_map<std::string, PropertyCallbackFunction>
       known_property_categories_;
+
+  // The overall status of this variable. If this is not ok, then all FooImpl()
+  // that return an absl::Status will be intercepted and return this instead.
+  // (E.g., GenerateImpl(), PrintImpl(), etc.)
+  absl::Status overall_status_ = absl::OkStatus();
 
   // ---------------------------------------------------------------------------
   //    Start of Internal Extended API
@@ -705,8 +718,8 @@ class MVariable : public moriarty_internal::AbstractVariable {
   // GetRandomEngine() [Internal Extended API]
   //
   // Retrieves the internal RandomEngine used for random generation. Only
-  // moriarty::MInteger should use this directly for randomization. Everyone
-  // else should call Random<int>().
+  // built-in types should use this directly. Everyone else should call
+  // `Random<MInteger>( ... )` to get a random integer.
   moriarty_internal::RandomEngine& GetRandomEngine();
 
   // SetUniverse() [Internal Extended API]
@@ -823,10 +836,10 @@ namespace moriarty_internal {
 //
 // Example usage:
 //   class MCustomType :
-//     public moriarty::librarian::MVariable<MCustomType, CustomType> { ... };
+//     public librarian::MVariable<MCustomType, CustomType> { ... };
 //
 //   MCustomType v;
-//   moriarty::moriarty_internal::MVariableManager(&v).GetRandomEngine();
+//   moriarty_internal::MVariableManager(&v).GetRandomEngine();
 template <typename VariableType, typename ValueType>
 class MVariableManager {
  public:
@@ -874,6 +887,7 @@ namespace librarian {
 
 template <typename V, typename G>
 std::string MVariable<V, G>::ToString() const {
+  if (!overall_status_.ok()) return overall_status_.ToString();
   std::string result = Typename();
   if (is_one_of_) {
     absl::StrAppend(&result,
@@ -925,8 +939,15 @@ V& MVariable<V, G>::MergeFrom(const V& other) {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::TryMergeFrom(const V& other) {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
+  if (!other.overall_status_.ok()) overall_status_ = other.overall_status_;
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
+
   if (other.is_one_of_) IsOneOf(*other.is_one_of_);
-  return MergeFromImpl(other);
+  MORIARTY_RETURN_IF_ERROR(MergeFromImpl(other));
+
+  // The merge may have caused a new error to occur.
+  return overall_status_;
 }
 
 template <typename V, typename G>
@@ -965,6 +986,7 @@ V& MVariable<V, G>::WithKnownProperty(Property property) {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::TryWithKnownProperty(Property property) {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   auto it = known_property_categories_.find(property.category);
   if (it == known_property_categories_.end()) {
     if (property.enforcement == Property::Enforcement::kIgnoreIfUnknown)
@@ -992,6 +1014,7 @@ absl::Status MVariable<V, G>::TryWithKnownProperty(Property property) {
 
 template <typename V, typename G>
 absl::StatusOr<std::vector<V>> MVariable<V, G>::GetDifficultInstances() const {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   MORIARTY_ASSIGN_OR_RETURN(std::vector<V> instances,
                             this->GetDifficultInstancesImpl());
   for (V& instance : instances) {
@@ -1388,11 +1411,19 @@ std::vector<std::string> MVariable<V, G>::GetDependencies(T variable) const {
   return moriarty_internal::MVariableManager(&variable).GetDependencies();
 }
 
+template <typename V, typename G>
+void MVariable<V, G>::DeclareSelfAsInvalid(absl::Status status) {
+  ABSL_CHECK(!status.ok());
+  ABSL_CHECK(IsMoriartyError(status));
+  overall_status_ = std::move(status);
+}
+
 // -----------------------------------------------------------------------------
 //  Template implementation for the Internal Extended API
 
 template <typename V, typename G>
 absl::StatusOr<G> MVariable<V, G>::Generate() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "Generate",
                               InternalConfigurationType::kUniverse);
@@ -1455,6 +1486,7 @@ absl::StatusOr<G> MVariable<V, G>::Generate() {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::IsSatisfiedWith(const G& value) const {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "IsSatisfiedWith",
                               InternalConfigurationType::kUniverse);
@@ -1498,17 +1530,20 @@ absl::Status MVariable<V, G>::MergeFrom(
 
 template <typename V, typename G>
 absl::StatusOr<G> MVariable<V, G>::TryRead() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   return ReadImpl();
 }
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::TryPrint(const G& value) {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   return PrintImpl(value);
 }
 
 template <typename V, typename G>
 absl::StatusOr<std::any> MVariable<V, G>::GetSubvalue(
     const std::any& my_value, absl::string_view subvalue_name) const {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   const G val = std::any_cast<const G>(my_value);
   MORIARTY_ASSIGN_OR_RETURN(Subvalues subvalues, GetSubvaluesImpl(val));
 
@@ -1560,11 +1595,13 @@ std::unique_ptr<moriarty_internal::AbstractVariable> MVariable<V, G>::Clone()
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::WithProperty(Property property) {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   return TryWithKnownProperty(std::move(property));
 }
 
 template <typename V, typename G>
 absl::StatusOr<G> MVariable<V, G>::GenerateOnce() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   MORIARTY_ASSIGN_OR_RETURN(G potential_value, [this]() -> absl::StatusOr<G> {
     if (is_one_of_) {
       return RandomElement(*is_one_of_);
@@ -1587,6 +1624,7 @@ absl::StatusOr<G> MVariable<V, G>::GenerateOnce() {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::AssignValue() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "AssignValue",
                               InternalConfigurationType::kUniverse);
@@ -1601,6 +1639,7 @@ absl::Status MVariable<V, G>::AssignValue() {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::AssignUniqueValue() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "AssignUniqueValue",
                               InternalConfigurationType::kUniverse);
@@ -1627,6 +1666,7 @@ absl::Status MVariable<V, G>::AssignUniqueValue() {
 
 template <typename V, typename G>
 std::optional<std::any> MVariable<V, G>::GetUniqueValueUntyped() const {
+  if (!overall_status_.ok()) return std::nullopt;
   if (is_one_of_) {
     if (is_one_of_->size() == 1) return is_one_of_->at(0);
     return std::nullopt;  // Not sure which one is correct.
@@ -1640,6 +1680,7 @@ std::optional<std::any> MVariable<V, G>::GetUniqueValueUntyped() const {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::ValueSatisfiesConstraints() const {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "ValueSatisfiesConstraints",
                               InternalConfigurationType::kUniverse);
@@ -1652,6 +1693,7 @@ absl::Status MVariable<V, G>::ValueSatisfiesConstraints() const {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::ReadValue() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "ReadValue",
                               InternalConfigurationType::kUniverse);
@@ -1666,6 +1708,7 @@ absl::Status MVariable<V, G>::ReadValue() {
 
 template <typename V, typename G>
 absl::Status MVariable<V, G>::PrintValue() {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   if (!universe_) {
     return MisconfiguredError(Typename(), "PrintValue",
                               InternalConfigurationType::kUniverse);
@@ -1687,6 +1730,7 @@ template <typename V, typename G>
 absl::StatusOr<
     std::vector<std::unique_ptr<moriarty_internal::AbstractVariable>>>
 MVariable<V, G>::GetDifficultAbstractVariables() const {
+  MORIARTY_RETURN_IF_ERROR(overall_status_);
   MORIARTY_ASSIGN_OR_RETURN(std::vector<V> instances,
                             this->GetDifficultInstances());
   std::vector<std::unique_ptr<moriarty_internal::AbstractVariable>> new_vec;

@@ -19,6 +19,7 @@
 #include <string>
 
 #include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 
 namespace moriarty {
 
@@ -50,8 +51,16 @@ Alphabet Alphabet::AlphaNumeric() { return Alphabet(kAlphaNumeric); }
 Alphabet Alphabet::UpperAlphaNumeric() { return Alphabet(kUpperAlphaNumeric); }
 Alphabet Alphabet::LowerAlphaNumeric() { return Alphabet(kLowerAlphaNumeric); }
 
+std::string Alphabet::ToString() const {
+  return absl::Substitute("Alphabet($0)", alphabet_);
+}
+
 SimplePattern::SimplePattern(absl::string_view pattern) : pattern_(pattern) {}
 
 std::string SimplePattern::GetPattern() const { return pattern_; }
+
+std::string SimplePattern::ToString() const {
+  return absl::Substitute("SimplePattern($0)", pattern_);
+}
 
 }  // namespace moriarty

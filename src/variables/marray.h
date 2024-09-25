@@ -50,9 +50,12 @@ namespace moriarty {
 
 // MArray<>
 //
-// Moriarty's array type. An MArray<MElementType> specifies that you want to
-// create an array of ElementType's. The constraints on each element are
-// controlled by the MElementType class. All elements have the same constraints.
+// Describes constraints placed on an array. The elements of the array must have
+// a corresponding MVariable, and general constraints on the elements are
+// controlled via the `Elements<>` constraint.
+//
+// In order to generate, the length of the array must be constrained (via the
+// `Length` constraint).
 template <typename MElementType>
 class MArray : public librarian::MVariable<
                    MArray<MElementType>,
@@ -62,8 +65,9 @@ class MArray : public librarian::MVariable<
   using vector_value_type = typename std::vector<element_value_type>;
 
   // Create an MArray from a set of constraints. Logically equivalent to
-  // calling AddConstraint() for each constraint. E.g.,
-  // MArray<MInteger>(Elements<MInteger>(Between(1, 10)), Length(15))
+  // calling AddConstraint() for each constraint.
+  //
+  // E.g., MArray<MInteger>(Elements<MInteger>(Between(1, 10)), Length(15))
   template <typename... Constraints>
     requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
   explicit MArray(Constraints&&... constraints);
@@ -148,9 +152,8 @@ class MArray : public librarian::MVariable<
   MElementType element_constraints_;
   std::optional<MInteger> length_;
   bool distinct_elements_ = false;
-  // TODO(hivini): Find a way to improve this. Like using StatusOr<> instead.
-  absl::Status separator_status_ = absl::OkStatus();
   std::optional<Whitespace> separator_;
+  Whitespace GetSeparator() const;
 
   std::optional<Property> length_size_property_;
 
@@ -347,12 +350,9 @@ MArray<MElementType>& MArray<MElementType>::WithDistinctElementsWithArg(
 template <typename MElementType>
 MArray<MElementType>& MArray<MElementType>::WithSeparator(
     Whitespace separator) {
-  if (!separator_status_.ok()) return *this;
-
   if (separator_.has_value() && *separator_ != separator) {
-    separator_status_ = absl::Status(absl::StatusCode::kFailedPrecondition,
-                                     "Invalid MArray separator state. Only "
-                                     "one type of separator is supported.");
+    this->DeclareSelfAsInvalid(UnsatisfiedConstraintError(
+        "Attempting to set multiple I/O separators for the same MArray."));
   } else {
     separator_ = separator;
   }
@@ -400,10 +400,15 @@ auto MArray<MElementType>::GenerateImpl() -> absl::StatusOr<vector_value_type> {
     MORIARTY_ASSIGN_OR_RETURN(
         auto value,
         this->Random(absl::StrCat("element[", i, "]"), element_constraints_));
-    res.push_back(value);
+    res.push_back(std::move(value));
   }
 
   return res;
+}
+
+template <typename MElementType>
+Whitespace MArray<MElementType>::GetSeparator() const {
+  return separator_.value_or(Whitespace::kSpace);
 }
 
 template <typename MElementType>
@@ -418,8 +423,8 @@ auto MArray<MElementType>::GenerateNDistinctImpl(int n)
     MORIARTY_ASSIGN_OR_RETURN(
         element_value_type value,
         GenerateUnseenElement(values_seen, remaining_retries, i));
-    res.push_back(value);
     values_seen.insert(value);
+    res.push_back(std::move(value));
   }
 
   return res;
@@ -476,13 +481,10 @@ template <typename MoriartyElementType>
 absl::Status MArray<MoriartyElementType>::PrintImpl(
     const vector_value_type& value) {
   for (int i = 0; i < value.size(); i++) {
-    // TODO(b/208296530): Add different separators
     if (i > 0) {
       MORIARTY_ASSIGN_OR_RETURN(librarian::IOConfig * io_config,
                                 this->GetIOConfig());
-      MORIARTY_RETURN_IF_ERROR(separator_status_);
-      MORIARTY_RETURN_IF_ERROR(io_config->PrintWhitespace(
-          separator_.has_value() ? *separator_ : Whitespace::kSpace));
+      MORIARTY_RETURN_IF_ERROR(io_config->PrintWhitespace(GetSeparator()));
     }
     MORIARTY_RETURN_IF_ERROR(this->Print(absl::StrCat("element[", i, "]"),
                                          element_constraints_, value[i]));
@@ -510,9 +512,7 @@ MArray<MoriartyElementType>::ReadImpl() {
   res.reserve(*length);
   for (int i = 0; i < *length; i++) {
     if (i > 0) {
-      MORIARTY_RETURN_IF_ERROR(separator_status_);
-      MORIARTY_RETURN_IF_ERROR(io_config->ReadWhitespace(
-          separator_.has_value() ? *separator_ : Whitespace::kSpace));
+      MORIARTY_RETURN_IF_ERROR(io_config->ReadWhitespace(GetSeparator()));
     }
     MORIARTY_ASSIGN_OR_RETURN(
         element_value_type elem,

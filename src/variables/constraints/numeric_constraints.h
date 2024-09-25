@@ -18,6 +18,7 @@
 #define MORIARTY_SRC_VARIABLES_NUMERIC_CONSTRAINTS_H_
 
 #include <cstdint>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "src/internal/range.h"
@@ -46,6 +47,9 @@ class Between : public MConstraint {
   // Returns the range of values that this constraint represents.
   [[nodiscard]] Range GetRange() const;
 
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
+
  private:
   Range bounds_;
 };
@@ -63,6 +67,9 @@ class AtMost : public MConstraint {
   // Returns the range of values that this constraint represents.
   [[nodiscard]] Range GetRange() const;
 
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
+
  private:
   Range bounds_;
 };
@@ -79,6 +86,9 @@ class AtLeast : public MConstraint {
 
   // Returns the range of values that this constraint represents.
   [[nodiscard]] Range GetRange() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   Range bounds_;

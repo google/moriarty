@@ -218,10 +218,10 @@ namespace moriarty_internal {
 // See corresponding functions in `Exporter` for documentation.
 //
 // Example usage:
-//   class ExampleExporter : public moriarty::Exporter { ... };
+//   class ExampleExporter : public Exporter { ... };
 //
 //   ExampleExporter e;
-//   moriarty::moriarty_internal::ExporterManager(&e).SetSeed({1, 2, 3});
+//   moriarty_internal::ExporterManager(&e).SetSeed({1, 2, 3});
 class ExporterManager {
  public:
   // This class does not take ownership of `exporter_to_manage`

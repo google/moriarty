@@ -58,5 +58,16 @@ TEST(SizeConstraintsTest, FromStringShouldWork) {
   EXPECT_EQ(SizeCategory("max").GetCommonSize(), CommonSize::kMax);
 }
 
+TEST(SizeConstraintsTest, ToStringShouldWork) {
+  EXPECT_EQ(SizeCategory::Any().ToString(), "SizeCategory(any)");
+  EXPECT_EQ(SizeCategory::Min().ToString(), "SizeCategory(min)");
+  EXPECT_EQ(SizeCategory::Tiny().ToString(), "SizeCategory(tiny)");
+  EXPECT_EQ(SizeCategory::Small().ToString(), "SizeCategory(small)");
+  EXPECT_EQ(SizeCategory::Medium().ToString(), "SizeCategory(medium)");
+  EXPECT_EQ(SizeCategory::Large().ToString(), "SizeCategory(large)");
+  EXPECT_EQ(SizeCategory::Huge().ToString(), "SizeCategory(huge)");
+  EXPECT_EQ(SizeCategory::Max().ToString(), "SizeCategory(max)");
+}
+
 }  // namespace
 }  // namespace moriarty

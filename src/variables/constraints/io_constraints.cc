@@ -16,6 +16,8 @@
 
 #include "src/variables/constraints/io_constraints.h"
 
+#include <string>
+
 #include "src/librarian/io_config.h"
 
 namespace moriarty {
@@ -23,5 +25,16 @@ namespace moriarty {
 IOSeparator::IOSeparator(Whitespace separator) : separator_(separator) {}
 
 Whitespace IOSeparator::GetSeparator() const { return separator_; }
+
+std::string IOSeparator::ToString() const {
+  switch (separator_) {
+    case Whitespace::kSpace:
+      return "IOSeparator(Space)";
+    case Whitespace::kTab:
+      return "IOSeparator(Tab)";
+    case Whitespace::kNewline:
+      return "IOSeparator(Newline)";
+  }
+}
 
 }  // namespace moriarty

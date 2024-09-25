@@ -39,12 +39,15 @@ namespace moriarty {
 
 // MInteger
 //
-// moriarty::MInteger is an integral variable type. It works as a 64-bit
-// signed integer internally and all APIs are designed around int64_t.
+// Describes constraints placed on an integer. We mean a "mathematical" integer,
+// not a "computer science" integer. As such, we intentionally do not have an
+// MVariable for 32-bit integers.
 class MInteger : public librarian::MVariable<MInteger, int64_t> {
  public:
   // Create an MInteger from a set of constraints. Logically equivalent to
   // calling AddConstraint() for each constraint.
+  //
+  // E.g., MInteger(Between(1, "3 * N + 1"), SizeCategory::Small())
   template <typename... Constraints>
     requires(std::derived_from<std::decay_t<Constraints>, MConstraint> && ...)
   explicit MInteger(Constraints&&... constraints);
@@ -152,9 +155,6 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   // are approximately in the order specified here (for example, in general,
   // you should expect "tiny" to be smaller than "small", and "small" to be
   // smaller than "medium", etc.)
-  //
-  // TODO(darcybest): This currently overwrites the old value. It should
-  // probably merge the value as other functions do.
   MInteger& WithSize(CommonSize size);
 
   // OfSizeProperty()
@@ -162,9 +162,6 @@ class MInteger : public librarian::MVariable<MInteger, int64_t> {
   // Tells this int to have a specific size. `property.category` must be
   // "size". The exact values here are not guaranteed and may change over
   // time. If exact values are required, specify them manually.
-  //
-  // TODO(darcybest): This currently overwrites the old value. It should
-  // probably merge the value as other functions do.
   absl::Status OfSizeProperty(Property property);
 
  private:

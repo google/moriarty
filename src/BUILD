@@ -295,6 +295,7 @@ cc_test(
         ":moriarty",
         ":test_case",
         "@com_google_googletest//:gtest_main",
+        "@absl//absl/status",
         "//src/testing:exporter_test_util",
         "//src/testing:generator_test_util",
         "//src/testing:importer_test_util",

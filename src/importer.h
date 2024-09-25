@@ -260,10 +260,10 @@ namespace moriarty_internal {
 // See corresponding functions in `Importer` for documentation.
 //
 // Example usage:
-//   class ExampleImporter : public moriarty::Importer { ... };
+//   class ExampleImporter : public Importer { ... };
 //
 //   ExampleImporter e;
-//   moriarty::moriarty_internal::ImporterManager(&e).SetGeneralConstraints( ...
+//   moriarty_internal::ImporterManager(&e).SetGeneralConstraints( ...
 //   );
 class ImporterManager {
  public:

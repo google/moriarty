@@ -31,6 +31,7 @@ using ::moriarty_testing::GenerateLots;
 using ::testing::AllOf;
 using ::testing::Each;
 using ::testing::Ge;
+using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::status::IsOkAndHolds;
 
@@ -51,6 +52,11 @@ TEST(ContainerConstraintsTest, ElementsConstraintsAreCorrect) {
                   Elements<MInteger>(AtLeast("X"), AtMost(15)).GetConstraints(),
                   Context().WithValue<MInteger>("X", 3)),
               IsOkAndHolds(Each(AllOf(Ge(3), Le(15)))));
+}
+
+TEST(ContainerConstraintsTest, LengthToStringWorks) {
+  EXPECT_THAT(Length(Between(1, 10)).ToString(),
+              AllOf(HasSubstr("Length"), HasSubstr("1, 10")));
 }
 
 }  // namespace

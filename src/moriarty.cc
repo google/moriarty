@@ -23,6 +23,7 @@
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "absl/types/span.h"
@@ -165,6 +166,24 @@ absl::Status Moriarty::TryValidateSingleTestCase(
 
   variables_.SetUniverse(&universe);
   return variables_.AllVariablesSatisfyConstraints();
+}
+
+void Moriarty::SetApproximateGenerationLimit(int64_t limit) {
+  approximate_generation_limit_ = limit;
+}
+
+absl::Status Moriarty::ValidateVariableName(absl::string_view name) {
+  if (name.empty())
+    return absl::InvalidArgumentError("Variable name cannot be empty");
+  for (char c : name)
+    if (!absl::ascii_isalnum(c) && c != '_')
+      return absl::InvalidArgumentError(
+          "Variable name can only contain 'A-Za-z0-9_'.");
+  // TODO(darcybest): Re-enable this test once our users update their workflow.
+  // if (!absl::ascii_isalpha(name[0]))
+  //   return absl::InvalidArgumentError(
+  //       "Variable name must start with an alphabetic character");
+  return absl::OkStatus();
 }
 
 }  // namespace moriarty

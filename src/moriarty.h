@@ -48,31 +48,21 @@
 
 namespace moriarty {
 
-// -----------------------------------------------------------------------------
-// NOTE: Some of the below items are not implemented yet. Items listed with
-//  ** are not yet supported, while * means they are supported.
-// -----------------------------------------------------------------------------
-
 // Moriarty
 //
-// This is the central class for data generation.
+// This is the central class of the Moriarty suite. Variables should be declared
+// through this class. Then Importers, Generators, and Exporters will use those
+// variables.
 //
-// You provide Moriarty with some of the following information:
+// Example usage:
 //
-// ** Variables (with optional constraints) you would like to generate
-// ** Custom generators to create tricky cases
-// ** Custom verifiers to verify the data is valid
-//
-// From this, Moriarty will:
-//
-// ** Generate purely random data
-// ** Generate edge cases in various forms
-// ** Generate "smart" random data to catch edge cases and have high variable
-//    interaction coverage TODO(darcybest): Describe this better.
-// ** Print in a very specific layout (useful for interviews, competitions, etc)
-// ** Automatically verify that data is formatted correctly
-// ** Verify that the data is valid
-// ** Give a report about the strength of your data
+//   Moriarty M;
+//   M.SetName("Example Constraints")
+//     .AddVariable("N", MInteger().Between(1, 100))
+//     .AddVariable("A", MArray(MInteger().Between(3, 5)).OfLength("3 * N + 1"))
+//     .AddVariable("S", MString().WithAlphabet("abc").OfLength("N"))
+//     .AddGenerator("CornerCaseGenerator", CustomCornerCaseGenerator())
+//     .AddGenerator("SmallExamples", SmallCaseGenerator());
 class Moriarty {
  public:
   // SetName() [required]
@@ -111,30 +101,32 @@ class Moriarty {
   //
   // This is the seed used for random generation. The seed must:
   //  * Be at least 10 characters long.
-  // ** The first 5 characters must encode the `name` provided (this helps
+  //
+  // In the future, this may also be added as a requirement:
+  //  * The first X characters must encode the `name` provided (this helps
   //    ensures a distinct seed is used for every question).
   //
-  // Crashes on failure. See `TryGetSeed()` for non-crashing version.
+  // Crashes on failure. See `TrySetSeed()` for non-crashing version.
   Moriarty& SetSeed(absl::string_view seed);
 
   // TrySetSeed()
   //
   // This is the seed used for random generation. The seed must:
   //  * Be at least 10 characters long.
-  // ** The first 5 characters must encode the `name` provided (this helps
+  //
+  // In the future, this may also be added as a requirement:
+  //  * The first X characters must encode the `name` provided (this helps
   //    ensures a distinct seed is used for every question).
   //
   // Returns status on failure. See `SetSeed()` for simpler API version.
   absl::Status TrySetSeed(absl::string_view seed);
-
-  // TODO(b/182810006): Enforce seed/name restrictions
 
   // AddVariable()
   //
   // Adds a variable to Moriarty with all global constraints applied to it. For
   // example:
   //
-  //  `M.AddVariable("N", moriarty::MInteger().Between(1, 10));`
+  //  `M.AddVariable("N", MInteger().Between(1, 10));`
   //
   // means that *all* instances of N that are generated will be between 1
   // and 10. Additional local constraints can be added to this in specific
@@ -143,10 +135,14 @@ class Moriarty {
   // error will be thrown since there is no number that is between 1 and 10 AND
   // 20 and 30.)
   //
-  // Crashes on failure. See `TryGetVariable()` for non-crashing version.
+  // Variable names must start with a letter (A-Za-z), and then only contain
+  // letters, numbers, and underscores (A-Za-z0-9_).
   //
-  // TODO(darcybest): Don't allow variable names with `.` in them since it's a
-  // special character for subvariables/subvalues.
+  // TODO(darcybest): This currently does not check the first letter criteria
+  // because one of our users has numbers first. All new users should only have
+  // A-Za-z as first letters.
+  //
+  // Crashes on failure. See `TryGetVariable()` for non-crashing version.
   template <typename T>
     requires std::derived_from<T,
                                librarian::MVariable<T, typename T::value_type>>
@@ -157,7 +153,7 @@ class Moriarty {
   // Adds a variable to Moriarty with all global constraints applied to it. For
   // example:
   //
-  //  `M.AddVariable("N", moriarty::MInteger().Between(1, 10));`
+  //  `M.AddVariable("N", MInteger().Between(1, 10));`
   //
   // means that *all* instances of N that are generated will be between 1
   // and 10. Additional local constraints can be added to this in specific
@@ -244,9 +240,7 @@ class Moriarty {
   // None of these values are guaranteed to remain the same in the future and
   // this function is a suggestion to Moriarty, not a guarantee that it will
   // stop generation at any point.
-  void SetApproximateGenerationLimit(int64_t limit) {
-    approximate_generation_limit_ = limit;
-  }
+  void SetApproximateGenerationLimit(int64_t limit);
 
  private:
   // Seed info
@@ -257,11 +251,10 @@ class Moriarty {
   std::string name_;
   int num_cases_ = 0;
 
-  // Variables info
-  // TODO(b/208295758): Rename to `general_constraints_`
+  // Variables
   moriarty_internal::VariableSet variables_;
 
-  // Generator info
+  // Generators
   struct GeneratorInfo {
     std::string name;
     // TODO(b/233664034): Consider changing to std::unique_ptr and changing
@@ -270,12 +263,11 @@ class Moriarty {
     int call_n_times;
   };
   std::vector<GeneratorInfo> generators_;
+  std::optional<int64_t> approximate_generation_limit_;
 
-  // TestCases info
+  // TestCases
   std::vector<moriarty_internal::ValueSet> assigned_test_cases_;
   std::vector<TestCaseMetadata> test_case_metadata_;
-
-  std::optional<int64_t> approximate_generation_limit_;
 
   // Generates the seed for generator_[index]. Negative numbers are reserved
   // for specialized generators (e.g., min_, max_, random_ generators).
@@ -284,6 +276,9 @@ class Moriarty {
   // Determines if a single test case is valid
   absl::Status TryValidateSingleTestCase(
       const moriarty_internal::ValueSet& values);
+
+  // Determines if a variable name is valid.
+  static absl::Status ValidateVariableName(absl::string_view name);
 };
 
 // -----------------------------------------------------------------------------
@@ -303,6 +298,7 @@ Moriarty& Moriarty::AddVariable(absl::string_view name, T variable) {
 template <typename T>
   requires std::derived_from<T, librarian::MVariable<T, typename T::value_type>>
 absl::Status Moriarty::TryAddVariable(absl::string_view name, T variable) {
+  MORIARTY_RETURN_IF_ERROR(ValidateVariableName(name));
   MORIARTY_RETURN_IF_ERROR(variables_.AddVariable(name, std::move(variable)))
       << "Adding the same variable multiple times";
   return absl::OkStatus();

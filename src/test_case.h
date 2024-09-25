@@ -223,7 +223,7 @@ namespace moriarty_internal {
 // Example usage:
 //
 //   TestCase t;
-//   moriarty::moriarty_internal::TestCaseManager(&t).SetVariables( ... );
+//   moriarty_internal::TestCaseManager(&t).SetVariables( ... );
 class TestCaseManager {
  public:
   // This class does not take ownership of `test_case_to_manage`

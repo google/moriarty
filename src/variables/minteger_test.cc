@@ -740,5 +740,48 @@ TEST(MIntegerNonBuilderTest, ToStringWorks) {
               AllOf(HasSubstr("[1, 5]"), HasSubstr("mall")));  // [S|s]mall
 }
 
+TEST(MIntegerNonBuilderTest, InvalidSizeCombinationsFailGeneration) {
+  EXPECT_THAT(
+      Generate(MInteger(SizeCategory::Small(), SizeCategory::Large())),
+      StatusIs(absl::StatusCode::kFailedPrecondition, HasSubstr("size")));
+
+  EXPECT_THAT(MInteger(SizeCategory::Small(), SizeCategory::Large()),
+              IsNotSatisfiedWith(123, "size"));
+
+  EXPECT_THAT(
+      MInteger(SizeCategory::Small(), SizeCategory::Large())
+          .TryMergeFrom(MInteger(SizeCategory::Tiny())),
+      StatusIs(absl::StatusCode::kFailedPrecondition, HasSubstr("size")));
+
+  EXPECT_THAT(
+      Print(MInteger(SizeCategory::Small(), SizeCategory::Large()), -1),
+      StatusIs(absl::StatusCode::kFailedPrecondition, HasSubstr("size")));
+
+  EXPECT_THAT(
+      Read(MInteger(SizeCategory::Small(), SizeCategory::Large()), "-1"),
+      StatusIs(absl::StatusCode::kFailedPrecondition, HasSubstr("size")));
+
+  EXPECT_THAT(MInteger(SizeCategory::Small(), SizeCategory::Large()).ToString(),
+              HasSubstr("Invalid size"));
+}
+
+TEST(MIntegerNonBuilderTest, InvalidExpressionsShouldFail) {
+  EXPECT_THAT(Generate(MInteger(Exactly("N + "))),
+              StatusIs(absl::StatusCode::kFailedPrecondition,
+                       HasSubstr("invalid expression")));
+
+  EXPECT_THAT(Generate(MInteger(AtMost("N + "))),
+              StatusIs(absl::StatusCode::kFailedPrecondition,
+                       HasSubstr("invalid expression")));
+
+  EXPECT_THAT(Generate(MInteger(AtLeast("N + "))),
+              StatusIs(absl::StatusCode::kFailedPrecondition,
+                       HasSubstr("invalid expression")));
+
+  EXPECT_THAT(Generate(MInteger(Between("& x", "N + "))),
+              StatusIs(absl::StatusCode::kFailedPrecondition,
+                       HasSubstr("invalid expression")));
+}
+
 }  // namespace
 }  // namespace moriarty

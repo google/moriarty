@@ -382,11 +382,10 @@ TEST(MStringTest, MergingTwoIdenticalSimplePatternsTogetherShouldWork) {
       MString().WithSimplePattern("[abc]{10, 20}").TryMergeFrom(constraints));
 }
 
-TEST(MStringDeathTest, MergingTwoDifferentSimplePatternsTogetherShouldFail) {
+TEST(MStringTest, MergingTwoDifferentSimplePatternsTogetherShouldWork) {
   MString constraints = MString().WithSimplePattern("[abc]{10, 20}");
-  EXPECT_DEATH(
-      { MString().WithSimplePattern("xxxxx").MergeFrom(constraints); },
-      "imple");  // checking for "[S|s]imple pattern"
+  MORIARTY_EXPECT_OK(
+      MString().WithSimplePattern("xxxxx").TryMergeFrom(constraints));
 }
 
 TEST(MStringTest, GenerateWithoutSimplePatternOrLengthOrAlphabetShouldFail) {
@@ -761,12 +760,23 @@ TEST(MStringNonBuilderTest,
       MString(SimplePattern("[abc]{10, 20}")).TryMergeFrom(constraints));
 }
 
-TEST(MStringNonBuilderDeathTest,
-     MergingTwoDifferentSimplePatternsTogetherShouldFail) {
+TEST(MStringNonBuilderTest,
+     MergingTwoDifferentSimplePatternsTogetherShouldWork) {
   MString constraints = MString(SimplePattern("[abc]{10, 20}"));
-  EXPECT_DEATH(
-      { MString(SimplePattern("xxxxx")).MergeFrom(constraints); },
-      "imple");  // checking for "[S|s]imple pattern"
+  MORIARTY_EXPECT_OK(MString(SimplePattern("xxxxx")).TryMergeFrom(constraints));
+}
+
+TEST(MStringNonBuilderTest,
+     MergingTwoDifferentSimplePatternsTogetherShouldGenerateIfCompatible) {
+  EXPECT_THAT(
+      MString(SimplePattern("[cd]{10, 20}"), SimplePattern("[cd]{5, 15}")),
+      GeneratedValuesAre(MatchesRegex("[cd]{10,15}")));
+
+  // Note, we don't know which simple pattern the generated value doesn't match.
+  EXPECT_THAT(Generate(MString(SimplePattern("[abc]{1, 10}"),
+                               SimplePattern("[abc]{15}"))),
+              StatusIs(absl::StatusCode::kFailedPrecondition,
+                       HasSubstr("does not match simple pattern")));
 }
 
 TEST(MStringNonBuilderTest,

@@ -71,5 +71,18 @@ TEST(AlphabetTest, BasicConstructorShouldReturnExactAlphabet) {
   EXPECT_EQ(Alphabet("AAA").GetAlphabet(), "AAA");
 }
 
+TEST(AlphabetTest, ToStringShouldWork) {
+  EXPECT_EQ(Alphabet("abc").ToString(), "Alphabet(abc)");
+  EXPECT_EQ(Alphabet("AbC").ToString(), "Alphabet(AbC)");
+  // TODO(darcybest): Consider escaping whitespace characters in string.
+  EXPECT_EQ(Alphabet("A\tC").ToString(), "Alphabet(A\tC)");
+  EXPECT_EQ(Alphabet("AAA").ToString(), "Alphabet(AAA)");
+}
+
+TEST(SimplePatternTest, ToStringShouldWork) {
+  EXPECT_EQ(SimplePattern("[a-z]*").ToString(), "SimplePattern([a-z]*)");
+  EXPECT_EQ(SimplePattern("[^a-z]?").ToString(), "SimplePattern([^a-z]?)");
+}
+
 }  // namespace
 }  // namespace moriarty

@@ -48,6 +48,7 @@ cc_library(
     hdrs = ["container_constraints.h"],
     deps = [
         ":base_constraints",
+        "@absl//absl/strings",
         "@absl//absl/strings:string_view",
         "//src/variables:minteger",
     ],
@@ -69,6 +70,7 @@ cc_library(
     hdrs = ["size_constraints.h"],
     deps = [
         ":base_constraints",
+        "@absl//absl/strings",
         "@absl//absl/strings:string_view",
         "//src/librarian:size_property",
     ],
@@ -80,6 +82,7 @@ cc_library(
     hdrs = ["string_constraints.h"],
     deps = [
         ":base_constraints",
+        "@absl//absl/strings",
         "@absl//absl/strings:string_view",
     ],
 )

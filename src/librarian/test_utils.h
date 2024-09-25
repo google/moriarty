@@ -32,9 +32,9 @@
 //         values and checking each for a property.
 //
 //     * GenerateLots(x, [optional] context)
-//         Calls `GenerateN(x, N)`, for some N (probably N=100 or 1000). Prefer
-//         to use `GeneratedValuesAre()` matcher below instead of generating
-//         lots of values and checking each for a property.
+//         Calls `GenerateN(x, N)`, for some N (probably N=30 ish). Prefer to
+//         use `GeneratedValuesAre()` matcher below instead of generating lots
+//         of values and checking each for a property.
 //
 // Input / Output Helpers:
 //
@@ -198,12 +198,12 @@ absl::StatusOr<std::vector<typename T::value_type>> GenerateN(
 
 // GenerateLots() [For tests only]
 //
-// NOTE: 100 may change in the future, do not depend on this exact value. If
+// NOTE: 30 may change in the future, do not depend on this exact value. If
 // you care about the exact number, use `GenerateN` instead.
 //
-// Generates 100 values from `variable` after seeding the variable with all
-// needed information. Convenience wrapper for `GenerateN(var, 100)` so the
-// magic number 100 doesn't appear all over tests.
+// Generates 30 values from `variable` after seeding the variable with all
+// needed information. Convenience wrapper for `GenerateN(var, 30)` so the
+// magic number 30 doesn't appear all over tests.
 template <typename T>
   requires std::derived_from<
       T, moriarty::librarian::MVariable<T, typename T::value_type>>
@@ -407,7 +407,7 @@ template <typename T>
       T, moriarty::librarian::MVariable<T, typename T::value_type>>
 absl::StatusOr<std::vector<typename T::value_type>> GenerateLots(
     T variable, Context context) {
-  return GenerateN(variable, 100, std::move(context));
+  return GenerateN(variable, 30, std::move(context));
 }
 
 template <typename T>

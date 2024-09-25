@@ -18,6 +18,7 @@
 #define MORIARTY_SRC_VARIABLES_CONSTRAINTS_CONTAINERS_H_
 
 #include <concepts>
+#include <string>
 
 #include "absl/strings/string_view.h"
 #include "src/variables/constraints/base_constraints.h"
@@ -47,6 +48,9 @@ class Length : public MConstraint {
 
   // Returns the constraints on the length.
   [[nodiscard]] MInteger GetConstraints() const;
+
+  // Returns a string representation of this constraint.
+  [[nodiscard]] std::string ToString() const;
 
  private:
   MInteger length_;

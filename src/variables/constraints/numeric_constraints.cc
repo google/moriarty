@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <string>
 
 #include "src/internal/range.h"
 
@@ -49,6 +50,9 @@ Between::Between(IntegerExpression minimum, IntegerExpression maximum) {
 
 Range Between::GetRange() const { return bounds_; }
 
+// TODO(darcybest): This should say the word "Between".
+std::string Between::ToString() const { return bounds_.ToString(); }
+
 AtMost::AtMost(int64_t maximum)
     : bounds_(std::numeric_limits<int64_t>::min(), maximum) {}
 
@@ -60,6 +64,9 @@ AtMost::AtMost(IntegerExpression maximum) {
 
 Range AtMost::GetRange() const { return bounds_; }
 
+// TODO(darcybest): This should say the word "AtMost".
+std::string AtMost::ToString() const { return bounds_.ToString(); }
+
 AtLeast::AtLeast(int64_t minimum)
     : bounds_(minimum, std::numeric_limits<int64_t>::max()) {}
 
@@ -70,5 +77,8 @@ AtLeast::AtLeast(IntegerExpression minimum) {
 }
 
 Range AtLeast::GetRange() const { return bounds_; }
+
+// TODO(darcybest): This should say the word "AtLeast".
+std::string AtLeast::ToString() const { return bounds_.ToString(); }
 
 }  // namespace moriarty

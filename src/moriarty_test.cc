@@ -20,6 +20,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/status/status.h"
 #include "src/test_case.h"
 #include "src/testing/exporter_test_util.h"
 #include "src/testing/generator_test_util.h"
@@ -47,6 +48,7 @@ using ::moriarty_testing::TwoTestTypeWrongTypeExporter;
 using ::moriarty_testing::TwoVariableFromVectorImporter;
 using ::testing::ElementsAre;
 using ::testing::Field;
+using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::SizeIs;
 
@@ -377,6 +379,38 @@ TEST(MoriartyTest, ApproximateGenerationLimitTruncatesTheSizeOfArrays) {
 
   EXPECT_THAT(test_cases, Each(Field(&moriarty_testing::ExampleTestCase::str,
                                      SizeIs(Le(30)))));
+}
+
+TEST(MoriartyTest, VariableNameValidationShouldWork) {
+  EXPECT_OK(Moriarty().TryAddVariable("good", MInteger()));
+  EXPECT_OK(Moriarty().TryAddVariable("a1_b", MInteger()));
+  EXPECT_OK(Moriarty().TryAddVariable("AbC_3c", MInteger()));
+
+  EXPECT_THAT(Moriarty().TryAddVariable("", MInteger()),
+              StatusIs(absl::StatusCode::kInvalidArgument, HasSubstr("empty")));
+
+  // TODO(darcybest): Re-enable these tests once our other user updates their
+  // workflow.
+
+  // EXPECT_THAT(Moriarty().TryAddVariable("1", MInteger()),
+  //             StatusIs(absl::StatusCode::kInvalidArgument,
+  //             HasSubstr("start")));
+  // EXPECT_THAT(Moriarty().TryAddVariable("_", MInteger()),
+  //             StatusIs(absl::StatusCode::kInvalidArgument,
+  //             HasSubstr("start")));
+
+  EXPECT_THAT(
+      Moriarty().TryAddVariable(" ", MInteger()),
+      StatusIs(absl::StatusCode::kInvalidArgument, HasSubstr("A-Za-z0-9_")));
+  EXPECT_THAT(
+      Moriarty().TryAddVariable("$", MInteger()),
+      StatusIs(absl::StatusCode::kInvalidArgument, HasSubstr("A-Za-z0-9_")));
+  EXPECT_THAT(
+      Moriarty().TryAddVariable("a$", MInteger()),
+      StatusIs(absl::StatusCode::kInvalidArgument, HasSubstr("A-Za-z0-9_")));
+  EXPECT_THAT(
+      Moriarty().TryAddVariable("a b", MInteger()),
+      StatusIs(absl::StatusCode::kInvalidArgument, HasSubstr("A-Za-z0-9_")));
 }
 
 }  // namespace

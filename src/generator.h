@@ -617,10 +617,10 @@ namespace moriarty_internal {
 // See corresponding functions in `Generator` for documentation.
 //
 // Example usage:
-//   class ExampleGenerator : public moriarty::Generator { ... };
+//   class ExampleGenerator : public Generator { ... };
 //
 //   ExampleGenerator g;
-//   moriarty::moriarty_internal::GeneratorManager(&g).SetSeed( ... );
+//   moriarty_internal::GeneratorManager(&g).SetSeed( ... );
 class GeneratorManager {
  public:
   // This class does not take ownership of `generator_to_manage`

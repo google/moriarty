@@ -31,4 +31,11 @@ TEST(IOSeparatorTest, GetSeparator) {
             Whitespace::kNewline);
 }
 
+TEST(IOSeparatorTest, ToString) {
+  EXPECT_EQ(IOSeparator(Whitespace::kSpace).ToString(), "IOSeparator(Space)");
+  EXPECT_EQ(IOSeparator(Whitespace::kTab).ToString(), "IOSeparator(Tab)");
+  EXPECT_EQ(IOSeparator(Whitespace::kNewline).ToString(),
+            "IOSeparator(Newline)");
+}
+
 }  // namespace

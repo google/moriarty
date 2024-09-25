@@ -81,6 +81,13 @@ TEST(NumericConstraintsTest, BetweenWorks) {
   EXPECT_TRUE(IsEmptyRange(Between(0, -5).GetRange()));
 }
 
+TEST(NumericConstraintsTest, BetweenToStringWorks) {
+  EXPECT_EQ(Between(10, 20).ToString(), "[10, 20]");
+  EXPECT_EQ(Between("10", 20).ToString(), "[10, 20]");
+  EXPECT_EQ(Between(10, "20").ToString(), "[10, 20]");
+  EXPECT_EQ(Between("10", "20").ToString(), "[10, 20]");
+}
+
 TEST(NumericConstraintsTest, AtLeastWorks) {
   Range expected;
   expected.AtLeast(20);
@@ -93,6 +100,16 @@ TEST(NumericConstraintsTest, AtMostWorks) {
   expected.AtMost(23);
   EXPECT_TRUE(EqualRanges(AtMost(23).GetRange(), expected));
   EXPECT_TRUE(EqualRanges(AtMost("23").GetRange(), expected));
+}
+
+TEST(NumericConstraintsTest, AtMostToStringWorks) {
+  EXPECT_EQ(AtMost(10).ToString(), "(-inf, 10]");
+  EXPECT_EQ(AtMost("N").ToString(), "(-inf, N]");
+}
+
+TEST(NumericConstraintsTest, AtLeastToStringWorks) {
+  EXPECT_EQ(AtLeast(10).ToString(), "[10, inf)");
+  EXPECT_EQ(AtLeast("N").ToString(), "[N, inf)");
 }
 
 }  // namespace

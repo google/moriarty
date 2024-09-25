@@ -37,7 +37,7 @@ class Exactly : public MConstraint {
   explicit Exactly(T value);
 
   // Returns the value that the variable must be.
-  T GetValue() const;
+  [[nodiscard]] T GetValue() const;
 
  private:
   T value_;
@@ -53,7 +53,7 @@ class Exactly<std::string> : public MConstraint {
   explicit Exactly(absl::string_view value);
 
   // Returns the value that the variable must be.
-  std::string GetValue() const;
+  [[nodiscard]] std::string GetValue() const;
 
  private:
   std::string value_;
