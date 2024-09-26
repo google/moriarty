@@ -33,7 +33,7 @@ some examples for common data types:
 
 For custom types, the constraints are custom made for the type. For example, a
 billing account could be a "privileged" account or a "large" account. The
-meaning of those is very situation specific, but should make sense in the
+meaning of those is very situation-specific, but should make sense in the
 context of that billing account class.
 
 With Moriarty, you convey all constraints using a builder-like syntax:
