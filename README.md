@@ -4,7 +4,7 @@
   <img width="250px" src="logo.png" alt="Moriarty Logo">
 </p>
 <p align="center">
-  <em>Create robust data generators and data validators with little-to-no
+  <em>Create robust data generators and data validators with little-to-no<br>
   boilerplate code based on just a description of the data.</em>
 </p>
 
